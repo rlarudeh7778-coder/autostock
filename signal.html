@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 시그널 — 반자동 코인 투자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0D1220; --card:#161D30; --card2:#1D2540; --line:#28304D;
+  --text:#F2F4FA; --muted:#8A93AD; --dim:#5A6480;
+  --buy:#F04452; --buy-bg:#2A1620;
+  --sell:#3B82F6; --sell-bg:#12203A;
+  --wait:#F5A524; --wait-bg:#261E10;
+  --mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:Pretendard,-apple-system,sans-serif;
+  max-width:520px;margin:0 auto;padding:20px 16px 60px;line-height:1.5}
+h1{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.sub{font-size:12px;color:var(--muted);margin-top:2px}
+header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.refresh{background:var(--card2);border:1px solid var(--line);color:var(--text);
+  border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.refresh:active{opacity:.7}
+
+.tabs{display:flex;gap:8px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.tab{flex:none;padding:9px 16px;text-align:center;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.tab.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+.strats{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.strat{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:11px 14px;cursor:pointer}
+.strat.on{border-color:var(--buy);background:var(--buy-bg)}
+.strat .nm{font-size:14px;font-weight:700;white-space:nowrap}
+.strat .ds{font-size:12px;color:var(--muted);flex:1}
+.badge{font-size:10px;font-weight:800;background:var(--buy);color:#fff;border-radius:6px;
+  padding:2px 7px;white-space:nowrap}
+.badge.gray{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
+
+.hero{border-radius:20px;padding:28px 22px;margin-bottom:14px;border:1px solid var(--line);
+  background:var(--card);transition:background .3s}
+.hero.buy{background:var(--buy-bg);border-color:#4A2230}
+.hero.wait{background:var(--wait-bg);border-color:#3D3218}
+.hero.sell{background:var(--sell-bg);border-color:#1E3560}
+.hero .label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px}
+.hero .word{font-size:44px;font-weight:800;letter-spacing:-1.5px;line-height:1.15;margin:4px 0 10px}
+.hero.buy .word{color:var(--buy)} .hero.wait .word{color:var(--wait)} .hero.sell .word{color:var(--sell)}
+.hero .why{font-size:14px;color:var(--text);opacity:.85}
+.hero .todo{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);
+  font-size:14px;font-weight:600}
+.hero .todo span{color:var(--muted);font-weight:400;font-size:13px;display:block;margin-top:2px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:700;margin-bottom:4px}
+.card .h2sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ind{background:var(--card2);border-radius:12px;padding:12px}
+.ind .k{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.ind .v{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:3px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.dot.ok{background:var(--buy)} .dot.no{background:var(--dim)}
+.ind .memo{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* 추천 종목 */
+.pick{display:flex;align-items:center;gap:10px;padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
+.pick:first-of-type{border-top:none;padding-top:2px}
+.pick .rank{font-family:var(--mono);font-size:12px;color:var(--dim);width:16px;flex:none}
+.pick .coin{font-weight:800;font-size:14px;width:52px;flex:none}
+.pick .trend{font-size:11px;flex:1;color:var(--muted)}
+.pick .ret{font-family:var(--mono);font-weight:700;font-size:13px;width:66px;text-align:right;flex:none}
+.up{color:var(--buy)} .down{color:var(--sell)}
+.pick .sig{font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;flex:none}
+.sig.b{background:var(--buy);color:#fff} .sig.w{background:var(--card2);color:var(--dim)}
+
+/* 성적표 */
+.score{border-top:1px solid var(--line);padding:11px 0}
+.score:first-of-type{border-top:none;padding-top:2px}
+.score .top{display:flex;justify-content:space-between;align-items:center}
+.score .nm{font-size:14px;font-weight:700;display:flex;gap:7px;align-items:center}
+.score .ret{font-family:var(--mono);font-weight:700;font-size:15px}
+.score .meta{font-size:12px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.bar{height:5px;background:var(--card2);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px}
+
+.row{display:flex;gap:10px;margin-bottom:10px}
+.field{flex:1}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+input,select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;color:var(--text);font-size:15px;font-family:var(--mono)}
+input:focus,select:focus{outline:none;border-color:var(--muted)}
+select{font-family:inherit}
+.result{background:var(--card2);border-radius:12px;padding:14px;margin-top:4px}
+.rline{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;gap:10px}
+.rline .k{color:var(--muted)} .rline .v{font-family:var(--mono);font-weight:600;text-align:right}
+.rline.big .v{font-size:18px;color:var(--buy)}
+.rline.sect{border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.rline.sect .k{color:var(--text);font-weight:700}
+.hint{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.6}
+.toggle{display:flex;gap:8px;margin-bottom:10px}
+.tg{flex:1;text-align:center;padding:9px;background:var(--card2);border:1px solid var(--line);
+  border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.tg.on{background:var(--buy-bg);border-color:var(--buy);color:var(--text)}
+
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;margin-top:12px}
+.btn.red{background:var(--buy);color:#fff}
+.btn.blue{background:var(--sell);color:#fff}
+.btn.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+.btn.half{width:auto;flex:1;margin-top:0;padding:12px}
+.btn:active{opacity:.8}
+
+.pos{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:10px}
+.pos .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pos .coin{font-weight:800;font-size:15px}
+.pos .pnlBig{font-family:var(--mono);font-weight:800;font-size:18px}
+.pos .meta{font-size:12px;color:var(--muted);line-height:1.8}
+.pos .meta b{color:var(--text)}
+.pos .alert{margin-top:8px;font-size:13px;font-weight:700;padding:9px 11px;border-radius:8px;line-height:1.5}
+.alert.exit{background:var(--sell-bg);color:var(--sell)}
+.alert.take{background:var(--buy-bg);color:var(--buy)}
+.alert.safe{background:rgba(245,165,36,.1);color:var(--wait)}
+.alert.hold{background:rgba(255,255,255,.04);color:var(--muted);font-weight:400}
+.ladder{display:flex;gap:6px;margin-top:10px}
+.ladder .step{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:8px;
+  padding:8px;text-align:center}
+.ladder .step.done{border-color:var(--buy);background:var(--buy-bg)}
+.ladder .step .t{font-size:10px;color:var(--muted)}
+.ladder .step .p{font-family:var(--mono);font-size:12px;font-weight:700;margin-top:2px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card2);border-radius:10px;padding:10px;text-align:center}
+.stat .v{font-family:var(--mono);font-size:16px;font-weight:700}
+.stat .k{font-size:11px;color:var(--muted);margin-top:2px}
+.hist{font-size:12px;border-top:1px solid var(--line);padding:9px 0;display:flex;justify-content:space-between;gap:8px}
+.hist .l{color:var(--muted)}
+.hist .r{font-family:var(--mono);font-weight:600}
+.empty{text-align:center;color:var(--dim);font-size:13px;padding:16px 0}
+.err{background:var(--wait-bg);border:1px solid #3D3218;color:var(--wait);border-radius:12px;
+  padding:14px;font-size:13px;margin-bottom:14px;display:none;line-height:1.6}
+
+/* 사용법 */
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+summary{font-size:14px;font-weight:700;cursor:pointer;list-style:none}
+summary::before{content:'📖 '}
+.guide{font-size:13px;color:var(--muted);line-height:1.8;margin-top:12px}
+.guide b{color:var(--text)}
+.guide .step{margin-bottom:12px}
+.guide .n{display:inline-block;background:var(--buy);color:#fff;font-size:11px;font-weight:800;
+  border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px;margin-right:6px}
+
+footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-height:1.7}
+.upd{font-size:11px;color:var(--dim);text-align:right;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>오늘의 시그널</h1>
+    <div class="sub">하루 1번, 오전 9시(일봉 마감) 후 확인</div>
+  </div>
+  <div style="text-align:right">
+    <button class="refresh" onclick="loadAll()">새로고침</button><br>
+    <a href="split.html" style="font-size:12px;color:var(--sell);text-decoration:none;font-weight:600">주식 스플릿 →</a>
+  </div>
+</header>
+
+<div class="err" id="err">시세를 불러오지 못했어요. 인터넷 연결을 확인하거나, GitHub Pages에 올린 뒤 접속하면 정상 작동해요.</div>
+
+<details id="guideBox">
+  <summary>처음이세요? 사용법 (30초)</summary>
+  <div class="guide">
+    <div class="step"><span class="n">1</span><b>매일 오전 9시 이후 한 번 열기.</b> 아래 "오늘의 추천 종목"에서 대장 코인 확인 → 탭에서 코인 선택 → 큰 글씨가 <b style="color:var(--buy)">매수 신호</b>인지 봐요. 관망이면 그날은 끝, 폰 닫으세요.</div>
+    <div class="step"><span class="n">2</span><b>매수 신호가 뜨면</b> 계산기에 총 투자금 입력 → 나온 금액대로 업비트에서 매수 → 업비트 "평균매수가"를 진입가 칸에 넣고 빨간 버튼으로 기록 → <b>업비트에 손절 주문까지 즉시 설정.</b> 분할매수를 켜면 2번 나눠 사는 금액과 가격을 알려줘요.</div>
+    <div class="step"><span class="n">3</span><b>보유 중엔</b> "보유 중" 카드가 다 알려줘요: 현재 수익률, 손익분기점, 그리고 <b>1차 익절(절반 팔기) 도달 시 알림</b> → 절반 팔고 버튼 누르면 손절이 본전으로 올라가서 <b>그 거래는 잃을 수 없는 거래</b>가 돼요. 나머지는 2차 목표나 청산 신호까지.</div>
+    <div class="step">⚠️ <b>철칙 3개</b>: ① 신호 없으면 안 산다 ② 손절 주문은 사자마자 건다 ③ 성적표가 마이너스인 코인·전략은 신호가 떠도 쉰다.</div>
+  </div>
+</details>
+
+<div class="card">
+  <h2>오늘의 추천 종목 <span style="color:var(--muted);font-weight:400">— 시총 상위 10개 자동 스캔</span></h2>
+  <div class="h2sub">추세가 강한 순서예요. 🔥대장 = 추세 조건 3개 모두 충족. 탭하면 그 코인으로 이동해요.</div>
+  <div id="pickList"><div class="empty">스캔 중...</div></div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="strats" id="stratList"></div>
+<div class="upd" id="upd"></div>
+
+<div class="hero wait" id="hero">
+  <div class="label" id="heroCoin">신호 확인 중</div>
+  <div class="word" id="heroWord">...</div>
+  <div class="why" id="heroWhy">데이터를 불러오는 중이에요.</div>
+  <div class="todo" id="heroTodo"></div>
+</div>
+
+<div class="card">
+  <h2>왜 이 신호인가요?</h2>
+  <div class="h2sub" id="indSub"></div>
+  <div class="grid" id="inds"></div>
+</div>
+
+<div class="card">
+  <h2>전략 성적표 <span style="color:var(--muted);font-weight:400">— 이 코인 최근 13개월</span></h2>
+  <div class="h2sub">페이지가 자동으로 3가지 전략을 백테스트해서 비교해요. 거래당 위험 1% 기준.</div>
+  <div id="scoreList"><div class="empty">데이터 로딩 중...</div></div>
+</div>
+
+<div class="card" id="posCard" style="display:none">
+  <h2>보유 중 <span style="color:var(--muted);font-weight:400">— 실시간 현재가 기준</span></h2>
+  <div id="posList"></div>
+</div>
+
+<div class="card">
+  <h2>얼마어치 살까? (자동 계산)</h2>
+  <div class="h2sub" id="calcSub"></div>
+  <div class="row">
+    <div class="field">
+      <label>내 총 투자금 (원)</label>
+      <input type="number" id="capital" placeholder="예: 1000000" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>거래당 감수할 위험</label>
+      <select id="riskPct">
+        <option value="0.005">0.5% (아주 안전)</option>
+        <option value="0.01" selected>1% (권장)</option>
+        <option value="0.02">2% (공격적)</option>
+      </select>
+    </div>
+  </div>
+  <div class="toggle">
+    <div class="tg on" id="tgOne" onclick="setSplit(false)">한 번에 사기</div>
+    <div class="tg" id="tgSplit" onclick="setSplit(true)">2번 나눠 사기 (분할매수)</div>
+  </div>
+  <div class="field" style="margin-bottom:10px">
+    <label>실제 진입가 (원) — 업비트 "평균매수가"를 그대로 넣으세요</label>
+    <input type="number" id="entryKrw" placeholder="다 산 뒤에 입력" inputmode="numeric">
+  </div>
+  <div class="result" id="calcResult"></div>
+  <div class="hint" id="calcHint"></div>
+  <button class="btn red" onclick="openTrade()">이 조건으로 매수했어요 → 일지에 기록</button>
+</div>
+
+<div class="card">
+  <h2>내 거래 일지</h2>
+  <div class="stats">
+    <div class="stat"><div class="v" id="sWin">—</div><div class="k">승률</div></div>
+    <div class="stat"><div class="v" id="sPnl">—</div><div class="k">총 손익</div></div>
+    <div class="stat"><div class="v" id="sCnt">0</div><div class="k">완료 거래</div></div>
+  </div>
+  <div id="histList"><div class="empty">아직 완료된 거래가 없어요. 첫 신호를 기다려 보세요.</div></div>
+  <button class="btn ghost" onclick="exportLog()">일지 내보내기 (CSV)</button>
+</div>
+
+<footer>
+  가격은 업비트 일봉(원화, 오전 9시 마감) 기준 · 손익분기점은 수수료 0.05%×2 반영<br>
+  신호·성적표는 참고용이며 미래 수익을 보장하지 않아요 · 투자 손실 책임은 본인에게 있어요
+</footer>
+
+<script>
+// ================= 순수 로직 (전략 · 지표 · 백테스트) =================
+function emaSeries(arr, span){
+  const k = 2/(span+1); let e = arr[0]; const out=[e];
+  for(let i=1;i<arr.length;i++){ e = arr[i]*k + e*(1-k); out.push(e); }
+  return out;
+}
+function rsiSeries(c, n=14){
+  const out = new Array(c.length).fill(50);
+  if(c.length <= n) return out;
+  let g=0,l=0;
+  for(let i=1;i<=n;i++){ const d=c[i]-c[i-1]; if(d>0) g+=d; else l-=d; }
+  let ag=g/n, al=l/n;
+  out[n] = al===0?100:100-100/(1+ag/al);
+  for(let i=n+1;i<c.length;i++){
+    const d=c[i]-c[i-1];
+    ag=(ag*(n-1)+Math.max(d,0))/n; al=(al*(n-1)+Math.max(-d,0))/n;
+    out[i] = al===0?100:100-100/(1+ag/al);
+  }
+  return out;
+}
+
+const STRATS = {
+  A:{ nm:'① 추세따라', ds:'상승 추세에 올라타기 · 가장 검증된 기본',
+      stop:0.02, tp:0.04,
+      entry:(i,d)=> d.close[i]>d.e50[i] && d.rsi[i]>=50 && d.rsi[i]<75,
+      exit:(i,d)=> d.close[i]<d.e20[i],
+      exitDesc:'종가가 20일선 아래로 마감',
+      entryDesc:'종가>50일선 + RSI 50~75' },
+  B:{ nm:'② 눌림목', ds:'상승 추세 중 조정받을 때 싸게 사기',
+      stop:0.025, tp:0.05,
+      entry:(i,d)=> d.close[i]>d.e50[i] && d.rsi[i-1]<45 && d.rsi[i]>=45,
+      exit:(i,d)=> d.close[i]<d.e50[i] || d.rsi[i]>=70,
+      exitDesc:'종가가 50일선 이탈 또는 RSI 70 도달',
+      entryDesc:'종가>50일선 + RSI가 45 아래서 위로 반등' },
+  C:{ nm:'③ 골든크로스', ds:'큰 추세만 타기 · 거래 적어서 제일 편함',
+      stop:0.05, tp:null,
+      entry:(i,d)=> d.e20[i-1]<=d.e50[i-1] && d.e20[i]>d.e50[i],
+      exit:(i,d)=> d.e20[i]<d.e50[i],
+      exitDesc:'데드크로스 (20일선이 50일선 아래로)',
+      entryDesc:'20일선이 50일선을 위로 돌파(골든크로스)' }
+};
+
+function backtest(s, d){
+  let cap=100; const R=[];
+  let inPos=false, ep=0, sp=0, tp=null, entryIdx=0;
+  const n = d.close.length;
+  for(let i=51;i<n;i++){
+    if(inPos && i>=entryIdx){
+      let ex=null;
+      if(d.low[i]<=sp) ex=sp;
+      else if(tp!==null && d.high[i]>=tp) ex=tp;
+      else if(s.exit(i,d)) ex=d.close[i];
+      if(ex!==null){
+        const r=(ex/ep-1)/s.stop;
+        R.push(r); cap*=(1+0.01*r); inPos=false;
+      }
+    }
+    if(!inPos && i<n-1 && s.entry(i,d)){
+      ep=d.open[i+1]; sp=ep*(1-s.stop); tp=s.tp?ep*(1+s.tp):null;
+      entryIdx=i+1; inPos=true;
+    }
+  }
+  const wins=R.filter(r=>r>0), losses=R.filter(r=>r<=0);
+  const pf = losses.length===0 ? (wins.length?99:0)
+           : wins.reduce((a,b)=>a+b,0)/Math.abs(losses.reduce((a,b)=>a+b,0));
+  return { count:R.length,
+    winRate: R.length? wins.length/R.length*100 : 0,
+    pf, totalReturn: cap-100 };
+}
+
+function recommend(results){
+  const ids=Object.keys(results);
+  const eligible=ids.filter(id=>results[id].count>=5 && results[id].pf>1);
+  if(eligible.length) return eligible.sort((a,b)=>results[b].pf-results[a].pf)[0];
+  const traded=ids.filter(id=>results[id].count>0);
+  if(traded.length) return traded.sort((a,b)=>results[b].totalReturn-results[a].totalReturn)[0];
+  return 'A';
+}
+
+// 대장 점수: 추세 조건 3개(종가>50일선, 20일선>50일선, RSI>=50) + 30일 수익률
+function trendScore(d){
+  const n=d.close.length-1;
+  let s=0;
+  if(d.close[n]>d.e50[n]) s++;
+  if(d.e20[n]>d.e50[n]) s++;
+  if(d.rsi[n]>=50) s++;
+  const ret30 = n>=30 ? (d.close[n]/d.close[n-30]-1)*100 : 0;
+  return {score:s, ret30};
+}
+// ================= 여기까지 순수 로직 =================
+
+// 시총 상위 10개 (업비트 원화마켓 상장 기준, 스테이블 제외)
+const COINS = [
+  {id:'BTC',sym:'KRW-BTC'},{id:'ETH',sym:'KRW-ETH'},{id:'XRP',sym:'KRW-XRP'},
+  {id:'SOL',sym:'KRW-SOL'},{id:'DOGE',sym:'KRW-DOGE'},{id:'ADA',sym:'KRW-ADA'},
+  {id:'TRX',sym:'KRW-TRX'},{id:'LINK',sym:'KRW-LINK'},{id:'AVAX',sym:'KRW-AVAX'},
+  {id:'XLM',sym:'KRW-XLM'}
+];
+const FEE = 0.001; // 손익분기: 업비트 수수료 0.05%x2 여유있게 0.1%
+let cur = localStorage.getItem('sig_coin') || 'BTC';
+let curStrat = localStorage.getItem('sig_strat') || 'A';
+let split = localStorage.getItem('sig_split')==='1';
+let market = {};
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function fetchCoin(c){
+  let raw = [], to = '';
+  for(let page=0; page<2; page++){
+    const url = `https://api.upbit.com/v1/candles/days?market=${c.sym}&count=200${to?'&to='+encodeURIComponent(to):''}`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('api '+r.status);
+    const batch = await r.json();
+    if(!Array.isArray(batch) || batch.length===0) break;
+    raw = raw.concat(batch);
+    to = batch[batch.length-1].candle_date_time_utc + 'Z';
+    await sleep(110);
+  }
+  const seen = new Set();
+  raw = raw.filter(k=>{ if(seen.has(k.candle_date_time_utc)) return false; seen.add(k.candle_date_time_utc); return true; });
+  raw.reverse();
+  const all = {
+    open: raw.map(k=>k.opening_price), high: raw.map(k=>k.high_price),
+    low:  raw.map(k=>k.low_price),    close:raw.map(k=>k.trade_price)
+  };
+  const live = all.close[all.close.length-1];
+  const d = {
+    open:all.open.slice(0,-1), high:all.high.slice(0,-1),
+    low:all.low.slice(0,-1), close:all.close.slice(0,-1)
+  };
+  d.e20 = emaSeries(d.close,20);
+  d.e50 = emaSeries(d.close,50);
+  d.rsi = rsiSeries(d.close);
+  const scores={};
+  for(const id in STRATS) scores[id]=backtest(STRATS[id], d);
+  return { d, live, scores, best: recommend(scores), trend: trendScore(d) };
+}
+
+async function loadAll(){
+  document.getElementById('err').style.display='none';
+  try{
+    for(let i=0;i<COINS.length;i++){
+      document.getElementById('upd').textContent = `불러오는 중... (${i+1}/${COINS.length})`;
+      market[COINS[i].id] = await fetchCoin(COINS[i]);
+    }
+    render();
+    document.getElementById('upd').textContent =
+      '업데이트: ' + new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+      + ' · 어제 마감 일봉 기준';
+  }catch(e){
+    document.getElementById('err').style.display='block';
+    document.getElementById('upd').textContent='';
+  }
+}
+
+const fmtP = n => {
+  if(n>=1e8) return (n/1e8).toFixed(2).replace(/\.?0+$/,'')+'억';
+  if(n>=1e5) return Math.round(n/1e4).toLocaleString('ko-KR')+'만';
+  return n.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원';
+};
+const fmtW = n => Math.round(n).toLocaleString('ko-KR')+'원';
+const pct = n => (n>=0?'+':'')+n.toFixed(1)+'%';
+
+function render(){
+  // 추천 종목 (추세 점수 → 30일 수익률 순)
+  const ranked = COINS.filter(c=>market[c.id])
+    .map(c=>({id:c.id, ...market[c.id].trend, buy: (()=>{const m=market[c.id];const n=m.d.close.length-1;return STRATS[curStrat].entry(n,m.d);})() }))
+    .sort((a,b)=> b.score-a.score || b.ret30-a.ret30);
+  const topScore = ranked.length? ranked[0].score : 0;
+  document.getElementById('pickList').innerHTML = ranked.map((r,i)=>{
+    const leader = r.score===3;
+    const tr = ['하락 추세','약세','추세 형성 중','상승 추세'][r.score];
+    return `<div class="pick" onclick="selectCoin('${r.id}')">
+      <span class="rank">${i+1}</span>
+      <span class="coin">${leader?'🔥':''}${r.id}</span>
+      <span class="trend">${tr}${leader?' · 대장':''}</span>
+      <span class="ret ${r.ret30>=0?'up':'down'}">${pct(r.ret30)}</span>
+      <span class="sig ${r.buy?'b':'w'}">${r.buy?'매수신호':'관망'}</span>
+    </div>`;
+  }).join('') + (topScore<3 ? '<div class="empty" style="padding-top:12px">지금은 대장이 없어요 (전부 약세) — 쉬는 것도 전략이에요</div>':'');
+
+  // 코인 탭
+  const tabs=document.getElementById('tabs'); tabs.innerHTML='';
+  COINS.forEach(c=>{
+    const b=document.createElement('div');
+    b.className='tab'+(c.id===cur?' on':''); b.textContent=c.id;
+    b.onclick=()=>selectCoin(c.id);
+    tabs.appendChild(b);
+  });
+
+  const m = market[cur];
+
+  // 전략 선택
+  const sl=document.getElementById('stratList'); sl.innerHTML='';
+  for(const id in STRATS){
+    const s=STRATS[id];
+    const div=document.createElement('div');
+    div.className='strat'+(id===curStrat?' on':'');
+    div.innerHTML=`<span class="nm">${s.nm}</span><span class="ds">${s.ds}</span>`
+      +(m && m.best===id ? '<span class="badge">이 코인 추천</span>':'');
+    div.onclick=()=>{curStrat=id; localStorage.setItem('sig_strat',id); render();};
+    sl.appendChild(div);
+  }
+
+  if(!m) return;
+  const s = STRATS[curStrat];
+  const d = m.d;
+  const n = d.close.length-1;
+  const openPos = getTrades().map((t,i)=>({...t,i})).filter(t=>!t.exit);
+  const holding = openPos.some(t=>t.coin===cur);
+
+  // 히어로
+  const hero=document.getElementById('hero');
+  let state, word, why, todo;
+  const buyNow = s.entry(n,d);
+  if(holding){
+    const myTrades = openPos.filter(t=>t.coin===cur);
+    const anyExit = myTrades.some(t=> STRATS[t.strat||'A'].exit(n,d));
+    if(anyExit){
+      state='sell'; word='청산 신호';
+      why='청산 조건 도달: '+STRATS[(myTrades.find(t=>STRATS[t.strat||'A'].exit(n,d))||myTrades[0]).strat||'A'].exitDesc+'.';
+      todo='지금 할 일: 보유 중인 '+cur+' 매도 → 아래 보유 카드에서 청산 기록<span>손절·익절가에 먼저 닿았었다면 그 가격으로 기록하세요</span>';
+    } else {
+      state='wait'; word='계속 보유';
+      why='아직 청산 조건이 아니에요. 아래 보유 카드의 안내를 따르세요.';
+      todo='지금 할 일: 보유 카드에서 1차 익절 도달 여부 확인<span>거래소에 손절 주문(스탑로스)을 꼭 걸어두세요</span>';
+    }
+  } else if(buyNow){
+    state='buy'; word='매수 신호';
+    why=s.nm.slice(2)+' 조건 충족: '+s.entryDesc+'.';
+    todo='지금 할 일: 아래 계산기 금액만큼 매수 → 손절 주문까지 걸기<span>산 뒤에는 빨간 버튼으로 일지에 기록하세요</span>';
+  } else {
+    state='wait'; word='관망';
+    why='아직 "'+s.entryDesc+'" 조건이 안 됐어요. 억지로 들어가지 마세요.';
+    todo='지금 할 일: 없음. 내일 다시 확인<span>신호 없는 날 쉬는 것도 전략이에요</span>';
+  }
+  hero.className='hero '+state;
+  document.getElementById('heroCoin').textContent=cur+' · 일봉 · '+s.nm.slice(2)+' 전략';
+  document.getElementById('heroWord').textContent=word;
+  document.getElementById('heroWhy').textContent=why;
+  document.getElementById('heroTodo').innerHTML=todo;
+
+  // 지표
+  document.getElementById('indSub').textContent='진입: '+s.entryDesc+' / 청산: '+s.exitDesc;
+  const okDot = ok => `<span class="dot ${ok?'ok':'no'}"></span>`;
+  let indHtml = `
+    <div class="ind"><div class="k">현재가 (실시간)</div><div class="v">${fmtP(m.live)}</div><div class="memo">판단은 마감봉 기준</div></div>
+    <div class="ind"><div class="k">어제 종가</div><div class="v">${fmtP(d.close[n])}</div><div class="memo">신호의 기준값</div></div>`;
+  if(curStrat==='C'){
+    indHtml += `
+    <div class="ind"><div class="k">${okDot(d.e20[n]>d.e50[n])} 20일선</div><div class="v">${fmtP(d.e20[n])}</div><div class="memo">50일선 위면 상승 국면</div></div>
+    <div class="ind"><div class="k">50일선</div><div class="v">${fmtP(d.e50[n])}</div><div class="memo">기준선</div></div>`;
+  } else if(curStrat==='B'){
+    indHtml += `
+    <div class="ind"><div class="k">${okDot(d.close[n]>d.e50[n])} 50일선 (추세)</div><div class="v">${fmtP(d.e50[n])}</div><div class="memo">종가가 이 위여야 함</div></div>
+    <div class="ind"><div class="k">${okDot(d.rsi[n-1]<45&&d.rsi[n]>=45)} RSI 반등</div><div class="v">${d.rsi[n-1].toFixed(0)} → ${d.rsi[n].toFixed(0)}</div><div class="memo">45 아래서 위로 올라와야 함</div></div>`;
+  } else {
+    indHtml += `
+    <div class="ind"><div class="k">${okDot(d.close[n]>d.e50[n])} 50일선 (추세)</div><div class="v">${fmtP(d.e50[n])}</div><div class="memo">종가가 이 위면 상승 추세</div></div>
+    <div class="ind"><div class="k">${okDot(d.rsi[n]>=50&&d.rsi[n]<75)} RSI 14 (힘)</div><div class="v">${d.rsi[n].toFixed(1)}</div><div class="memo">50~75 사이여야 함 (75↑ 과열)</div></div>`;
+  }
+  document.getElementById('inds').innerHTML=indHtml;
+
+  // 성적표
+  const maxRet = Math.max(1, ...Object.values(m.scores).map(x=>Math.abs(x.totalReturn)));
+  document.getElementById('scoreList').innerHTML = Object.keys(STRATS).map(id=>{
+    const sc=m.scores[id], st=STRATS[id];
+    const w = Math.min(100, Math.abs(sc.totalReturn)/maxRet*100);
+    return `<div class="score">
+      <div class="top">
+        <span class="nm">${st.nm}${m.best===id?' <span class="badge">추천</span>':''}</span>
+        <span class="ret ${sc.totalReturn>=0?'up':'down'}">${pct(sc.totalReturn)}</span>
+      </div>
+      <div class="meta">거래 ${sc.count}건 · 승률 ${sc.winRate.toFixed(0)}% · PF ${sc.pf>=99?'∞':sc.pf.toFixed(2)}</div>
+      <div class="bar"><i style="width:${w}%;background:${sc.totalReturn>=0?'var(--buy)':'var(--sell)'}"></i></div>
+    </div>`;
+  }).join('');
+
+  renderPositions(); calc(); renderHistory();
+}
+
+function selectCoin(id){
+  cur=id; localStorage.setItem('sig_coin',id); render();
+  document.getElementById('hero').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ---------- 분할매수 토글 ----------
+function setSplit(v){
+  split=v; localStorage.setItem('sig_split', v?'1':'0');
+  document.getElementById('tgOne').className='tg'+(v?'':' on');
+  document.getElementById('tgSplit').className='tg'+(v?' on':'');
+  calc();
+}
+
+// ---------- 계산기 ----------
+function calc(){
+  const s = STRATS[curStrat];
+  const cap = parseFloat(document.getElementById('capital').value)||0;
+  const risk = parseFloat(document.getElementById('riskPct').value);
+  const entry = parseFloat(document.getElementById('entryKrw').value)||0;
+  const m = market[cur];
+  const ref = entry>0 ? entry : (m ? m.live : 0); // 진입가 없으면 현재가 기준 미리보기
+
+  document.getElementById('calcSub').textContent =
+    s.nm.slice(2)+' 전략 기준: 손절 −'+(s.stop*100).toFixed(1)+'%'
+    +(s.tp?' / 1차 익절 +'+(s.stop*100).toFixed(1)+'% (절반) / 2차 익절 +'+(s.tp*100).toFixed(0)+'%'
+          :' / 1차 익절 +'+(s.stop*100).toFixed(0)+'% (절반) / 나머지는 추세 끝까지');
+
+  let html='';
+  const size = cap>0 ? Math.min(cap*risk/s.stop, cap) : 0;
+  if(split){
+    const s1=size*0.6, s2=size*0.4;
+    html += `<div class="rline big"><span class="k">총 매수 금액</span><span class="v">${size?fmtW(size):'—'}</span></div>
+      <div class="rline"><span class="k">1차: 지금 시장가</span><span class="v">${size?fmtW(s1)+' (60%)':'—'}</span></div>
+      <div class="rline"><span class="k">2차: −1% 지정가 예약</span><span class="v">${size?fmtW(s2)+' (40%)':'—'}</span></div>
+      <div class="rline"><span class="k">2차 지정가</span><span class="v">${ref?fmtW(ref*0.99):'—'}</span></div>`;
+  } else {
+    html += `<div class="rline big"><span class="k">매수 금액</span><span class="v">${size?fmtW(size):'—'}</span></div>`;
+  }
+  html += `<div class="rline"><span class="k">이번 거래 최대 손실</span><span class="v">${size?'-'+fmtW(size*s.stop):'—'}</span></div>
+    <div class="rline sect"><span class="k">주문 걸 가격 ${entry>0?'(내 평단 기준)':'(현재가 기준 미리보기)'}</span><span class="v"></span></div>
+    <div class="rline"><span class="k">손절가 (−${(s.stop*100).toFixed(1)}%)</span><span class="v">${ref?fmtW(ref*(1-s.stop)):'—'}</span></div>
+    <div class="rline"><span class="k">1차 익절 · 절반 (+${(s.stop*100).toFixed(1)}%)</span><span class="v">${ref?fmtW(ref*(1+s.stop)):'—'}</span></div>
+    <div class="rline"><span class="k">2차 익절 · 나머지 ${s.tp?'(+'+(s.tp*100).toFixed(0)+'%)':''}</span><span class="v">${s.tp?(ref?fmtW(ref*(1+s.tp)):'—'):'없음 — 추세 끝까지'}</span></div>`;
+  document.getElementById('calcResult').innerHTML=html;
+
+  document.getElementById('calcHint').innerHTML = split
+    ? '분할매수는 <b>지금 60% 사고, 1% 더 떨어지면 40%를 추가로 사서 평단을 낮추는</b> 방식이에요. 2차가 체결 안 되고 올라가면 60%만으로 가면 됩니다. 다 산 뒤 업비트의 <b>평균매수가</b>를 진입가 칸에 넣으세요.'
+    : '매수 금액이 커 보여도 놀라지 마세요. 손절폭이 짧아서, <b>손절만 지키면 실제 잃는 돈은 위 "최대 손실"뿐</b>이에요. 손절을 안 지키면 이 시스템 전체가 무너집니다.';
+}
+document.getElementById('capital').addEventListener('input', ()=>{localStorage.setItem('sig_cap',document.getElementById('capital').value); calc();});
+document.getElementById('riskPct').addEventListener('change', calc);
+document.getElementById('entryKrw').addEventListener('input', calc);
+document.getElementById('capital').value = localStorage.getItem('sig_cap')||'';
+
+// ---------- 일지 ----------
+const getTrades = () => JSON.parse(localStorage.getItem('sig_trades')||'[]');
+const saveTrades = t => localStorage.setItem('sig_trades', JSON.stringify(t));
+
+function openTrade(){
+  const s = STRATS[curStrat];
+  const cap = parseFloat(document.getElementById('capital').value)||0;
+  const entry = parseFloat(document.getElementById('entryKrw').value)||0;
+  const risk = parseFloat(document.getElementById('riskPct').value);
+  if(!cap || !entry){ alert('총 투자금과 실제 진입가(평균매수가)를 먼저 입력해주세요.'); return; }
+  const size = Math.min(cap*risk/s.stop, cap);
+  const t = getTrades();
+  t.push({coin:cur, strat:curStrat, date:new Date().toISOString().slice(0,10), entry, size,
+    stop:entry*(1-s.stop), t1:entry*(1+s.stop), tp:s.tp?entry*(1+s.tp):null,
+    t1Done:false, exit:null});
+  saveTrades(t);
+  document.getElementById('entryKrw').value='';
+  render();
+  alert('기록 완료! 업비트에서 손절 주문(스탑로스)도 꼭 걸어두세요.\n손절가: '+fmtW(entry*(1-s.stop)));
+}
+
+function renderPositions(){
+  const open = getTrades().map((t,i)=>({...t,i})).filter(t=>!t.exit);
+  const card = document.getElementById('posCard');
+  if(open.length===0){ card.style.display='none'; return; }
+  card.style.display='block';
+  card.querySelector('#posList').innerHTML = open.map(t=>{
+    const m = market[t.coin];
+    const st = STRATS[t.strat||'A'];
+    const t1 = t.t1 || t.entry*(1+st.stop);
+    const be = t.entry*(1+FEE); // 손익분기점 (수수료 반영)
+    const live = m ? m.live : 0;
+    const pnlPct = live ? (live/t.entry-1)*100 : 0;
+    const pnlKrw = t.size * pnlPct/100;
+    const exitSig = m && st.exit(m.d.close.length-1, m.d);
+    const effStop = t.t1Done ? Math.max(t.stop, be) : t.stop;
+
+    // 지금 할 일 판단 (우선순위: 손절 > 2차 > 1차 > 규칙청산 > 보유)
+    let advice, cls;
+    if(live && live<=effStop){
+      advice='🚨 손절가 도달 — 전량 매도 후 아래에 기록하세요 (미련 금지)'; cls='exit';
+    } else if(t.tp && live>=t.tp){
+      advice='🎯 2차 익절 도달! 남은 전량 매도 후 기록하세요'; cls='take';
+    } else if(!t.t1Done && live>=t1){
+      advice='🎯 1차 익절 도달! <b>절반만 매도</b> → 아래 "절반 익절" 버튼 → 손절이 본전으로 올라가요'; cls='take';
+    } else if(exitSig){
+      advice='⚠ 청산 신호 — '+st.exitDesc+'. 전량 매도 후 기록하세요'; cls='exit';
+    } else if(t.t1Done){
+      advice='🛡 절반 익절 완료 — 손절이 본전('+fmtW(be)+')이라 이제 잃을 수 없어요. '+(t.tp?'2차 목표 '+fmtW(t.tp)+' 대기':'추세 꺾일 때까지 보유'); cls='safe';
+    } else {
+      advice='보유 유지 — 1차 목표 '+fmtW(t1)+' 대기 중'; cls='hold';
+    }
+
+    return `<div class="pos">
+      <div class="top">
+        <span class="coin">${t.coin} <span style="font-size:11px;color:var(--muted);font-weight:400">${st.nm}${t.t1Done?' · 절반 남음':''}</span></span>
+        <span class="pnlBig ${pnlPct>=0?'up':'down'}">${live?pct(pnlPct):'—'}</span>
+      </div>
+      <div class="meta">
+        현재가 <b>${live?fmtW(live):'—'}</b> · 평단 <b>${fmtW(t.entry)}</b> · 평가손익 <b class="${pnlKrw>=0?'up':'down'}">${live?(pnlKrw>=0?'+':'')+fmtW(pnlKrw):'—'}</b><br>
+        손익분기점 ${fmtW(be)} (수수료 포함) · 남은 금액 ${fmtW(t.size)}
+      </div>
+      <div class="ladder">
+        <div class="step"><div class="t">손절${t.t1Done?'(본전)':''}</div><div class="p">${fmtW(effStop)}</div></div>
+        <div class="step ${t.t1Done?'done':''}"><div class="t">1차 절반${t.t1Done?' ✓':''}</div><div class="p">${fmtW(t1)}</div></div>
+        <div class="step"><div class="t">2차 전량</div><div class="p">${t.tp?fmtW(t.tp):'추세끝'}</div></div>
+      </div>
+      <div class="alert ${cls}">${advice}</div>
+      <div class="row" style="margin-top:10px;margin-bottom:0">
+        <input type="number" id="exitP${t.i}" placeholder="판 가격 (원)" inputmode="numeric">
+      </div>
+      <div class="row" style="margin-bottom:0;margin-top:8px">
+        ${!t.t1Done?`<button class="btn ghost half" onclick="partialClose(${t.i})">절반 익절 기록</button>`:''}
+        <button class="btn blue half" onclick="closeTrade(${t.i})">전량 청산 기록</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function partialClose(i){
+  const p = parseFloat(document.getElementById('exitP'+i).value)||0;
+  if(!p){ alert('판 가격을 입력해주세요.'); return; }
+  const t = getTrades();
+  const half = t[i].size/2;
+  const pnl = (p - t[i].entry)/t[i].entry * half;
+  // 절반은 완료 기록으로 추가
+  t.push({coin:t[i].coin, strat:t[i].strat, date:t[i].date, entry:t[i].entry, size:half,
+    exit:p, exitDate:new Date().toISOString().slice(0,10), pnl, note:'1차 익절'});
+  // 남은 절반: 손절을 본전으로
+  t[i].size = half;
+  t[i].t1Done = true;
+  t[i].stop = Math.max(t[i].stop, t[i].entry*(1+FEE));
+  saveTrades(t);
+  render();
+  alert('절반 익절 기록 완료!\n남은 물량의 손절이 본전('+fmtW(t[i].stop)+')으로 올라갔어요.\n업비트 손절 주문도 이 가격으로 수정하세요.');
+}
+
+function closeTrade(i){
+  const p = parseFloat(document.getElementById('exitP'+i).value)||0;
+  if(!p){ alert('판 가격을 입력해주세요.'); return; }
+  const t = getTrades();
+  t[i].exit = p;
+  t[i].exitDate = new Date().toISOString().slice(0,10);
+  t[i].pnl = (p - t[i].entry)/t[i].entry * t[i].size;
+  saveTrades(t);
+  render();
+}
+
+function renderHistory(){
+  const done = getTrades().filter(t=>t.exit).reverse();
+  const el = document.getElementById('histList');
+  if(done.length===0){
+    el.innerHTML='<div class="empty">아직 완료된 거래가 없어요. 첫 신호를 기다려 보세요.</div>';
+    document.getElementById('sWin').textContent='—';
+    document.getElementById('sPnl').textContent='—';
+    document.getElementById('sCnt').textContent='0';
+    return;
+  }
+  const wins = done.filter(t=>t.pnl>0).length;
+  const pnl = done.reduce((a,t)=>a+t.pnl,0);
+  document.getElementById('sWin').textContent = (wins/done.length*100).toFixed(0)+'%';
+  const pnlEl = document.getElementById('sPnl');
+  pnlEl.textContent = (pnl>=0?'+':'')+Math.round(pnl/10000)+'만';
+  pnlEl.style.color = pnl>=0 ? 'var(--buy)' : 'var(--sell)';
+  document.getElementById('sCnt').textContent = done.length;
+  el.innerHTML = done.slice(0,15).map(t=>{
+    const r = (t.exit-t.entry)/t.entry*100;
+    return `<div class="hist">
+      <span class="l">${t.exitDate} · ${t.coin} · ${STRATS[t.strat||'A'].nm}${t.note?' · '+t.note:''}</span>
+      <span class="r" style="color:${t.pnl>=0?'var(--buy)':'var(--sell)'}">${r>=0?'+':''}${r.toFixed(1)}% (${t.pnl>=0?'+':''}${fmtW(t.pnl)})</span>
+    </div>`;
+  }).join('');
+}
+
+function exportLog(){
+  const done = getTrades().filter(t=>t.exit);
+  if(done.length===0){ alert('내보낼 완료 거래가 없어요.'); return; }
+  let csv='\uFEFF코인,전략,구분,진입일,청산일,진입가,청산가,매수금액,손익\n';
+  done.forEach(t=> csv+=`${t.coin},${STRATS[t.strat||'A'].nm},${t.note||'전량'},${t.date},${t.exitDate},${t.entry},${t.exit},${Math.round(t.size)},${Math.round(t.pnl)}\n`);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='trade_log.csv'; a.click();
+}
+
+// 초기 상태 반영
+if(split){ document.getElementById('tgOne').className='tg'; document.getElementById('tgSplit').className='tg on'; }
+if(!localStorage.getItem('sig_guide_seen')){ document.getElementById('guideBox').open=true; localStorage.setItem('sig_guide_seen','1'); }
+loadAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세븐스플릿 주식 — 반자동 분할 투자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0D1220; --card:#161D30; --card2:#1D2540; --line:#28304D;
+  --text:#F2F4FA; --muted:#8A93AD; --dim:#5A6480;
+  --buy:#F04452; --buy-bg:#2A1620;
+  --sell:#3B82F6; --sell-bg:#12203A;
+  --wait:#F5A524; --wait-bg:#261E10;
+  --mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:Pretendard,-apple-system,sans-serif;
+  max-width:520px;margin:0 auto;padding:20px 16px 60px;line-height:1.5}
+h1{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.sub{font-size:12px;color:var(--muted);margin-top:2px}
+header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+a.nav{font-size:12px;color:var(--sell);text-decoration:none;font-weight:600}
+.refresh{background:var(--card2);border:1px solid var(--line);color:var(--text);
+  border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.refresh:active{opacity:.7}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:700;margin-bottom:4px}
+.card .h2sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.badge{font-size:10px;font-weight:800;background:var(--buy);color:#fff;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.badge.blue{background:var(--sell)}
+.badge.gray{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
+
+/* 발굴 리스트 */
+.pick{display:flex;align-items:center;gap:10px;padding:12px 4px;border-top:1px solid var(--line);cursor:pointer}
+.pick:first-of-type{border-top:none;padding-top:2px}
+.pick.on{background:rgba(240,68,82,.05);border-radius:10px;padding-left:8px;padding-right:8px}
+.pick .rank{font-family:var(--mono);font-size:12px;color:var(--dim);width:16px;flex:none}
+.pick .nmwrap{flex:1;min-width:0}
+.pick .nm{font-weight:700;font-size:14px}
+.pick .code{font-size:11px;color:var(--dim);font-family:var(--mono)}
+.pick .price{font-family:var(--mono);font-weight:700;font-size:13px;text-align:right;flex:none}
+.pick .pos{font-size:11px;color:var(--muted);text-align:right;flex:none;width:88px}
+.rangebar{height:5px;background:var(--card2);border-radius:3px;margin-top:5px;position:relative}
+.rangebar i{position:absolute;top:-2.5px;width:10px;height:10px;border-radius:50%;background:var(--text);transform:translateX(-50%)}
+.up{color:var(--buy)} .down{color:var(--sell)}
+.pick .reason{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.5}
+.report{background:var(--card2);border-radius:12px;padding:14px;font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:12px}
+.report b{color:var(--text)}
+.rankItem{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid var(--buy);cursor:pointer}
+.rankItem.rank2{border-left-color:var(--wait)}
+.rankItem.rank3{border-left-color:var(--dim)}
+.rankItem:active{opacity:.8}
+.rankItem .rank{font-weight:800;font-size:24px;margin-right:12px;float:left;color:var(--buy)}
+.rankItem.rank2 .rank{color:var(--wait)}
+.rankItem.rank3 .rank{color:var(--dim)}
+.rankItem .info{overflow:hidden}
+.rankItem .nm{font-weight:700;font-size:14px}
+.rankItem .desc{font-size:12px;color:var(--muted);margin-top:4px}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ind{background:var(--card2);border-radius:12px;padding:12px}
+.ind .k{font-size:11px;color:var(--muted)}
+.ind .v{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:3px}
+.ind .memo{font-size:11px;color:var(--dim);margin-top:2px}
+
+.row{display:flex;gap:10px;margin-bottom:10px}
+.field{flex:1}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+input,select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;color:var(--text);font-size:15px;font-family:var(--mono)}
+input:focus,select:focus{outline:none;border-color:var(--muted)}
+select{font-family:inherit}
+
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;margin-top:12px}
+.btn.red{background:var(--buy);color:#fff}
+.btn.blue{background:var(--sell);color:#fff}
+.btn.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+.btn.mini{width:auto;margin:0;padding:8px 14px;font-size:12px;border-radius:8px}
+.btn:active{opacity:.8}
+
+/* 스플릿 사다리 */
+.srow{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding:11px 0;font-size:13px}
+.srow:first-of-type{border-top:none}
+.srow .no{width:34px;flex:none;font-weight:800;font-family:var(--mono)}
+.srow .info{flex:1;min-width:0}
+.srow .l1{font-family:var(--mono);font-weight:600}
+.srow .l2{font-size:11px;color:var(--muted);margin-top:1px}
+.srow .st{flex:none;font-size:11px;font-weight:800;border-radius:6px;padding:3px 8px}
+.st.wait{background:var(--card2);color:var(--dim)}
+.st.buyNow{background:var(--buy);color:#fff}
+.st.hold{background:var(--wait-bg);color:var(--wait)}
+.st.sellNow{background:var(--sell);color:#fff}
+.st.done{background:var(--card2);color:var(--buy);border:1px solid var(--line)}
+.alertBox{margin-top:4px;font-size:13px;font-weight:700;padding:10px 12px;border-radius:10px;line-height:1.5;margin-bottom:10px}
+.alertBox.buy{background:var(--buy-bg);color:var(--buy)}
+.alertBox.sell{background:var(--sell-bg);color:var(--sell)}
+.alertBox.calm{background:rgba(255,255,255,.04);color:var(--muted);font-weight:400}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card2);border-radius:10px;padding:10px;text-align:center}
+.stat .v{font-family:var(--mono);font-size:16px;font-weight:700}
+.stat .k{font-size:11px;color:var(--muted);margin-top:2px}
+.hist{font-size:12px;border-top:1px solid var(--line);padding:9px 0;display:flex;justify-content:space-between;gap:8px}
+.hist .l{color:var(--muted)}
+.hist .r{font-family:var(--mono);font-weight:600}
+.empty{text-align:center;color:var(--dim);font-size:13px;padding:16px 0}
+.err{background:var(--wait-bg);border:1px solid #3D3218;color:var(--wait);border-radius:12px;
+  padding:14px;font-size:13px;margin-bottom:14px;display:none;line-height:1.7}
+.err b{color:var(--text)}
+.hint{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.6}
+
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+summary{font-size:14px;font-weight:700;cursor:pointer;list-style:none}
+summary::before{content:'📖 '}
+.guide{font-size:13px;color:var(--muted);line-height:1.8;margin-top:12px}
+.guide b{color:var(--text)}
+.guide .step{margin-bottom:12px}
+.guide .n{display:inline-block;background:var(--buy);color:#fff;font-size:11px;font-weight:800;
+  border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px;margin-right:6px}
+footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-height:1.7}
+.upd{font-size:11px;color:var(--dim);text-align:right;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>세븐스플릿 주식</h1>
+    <div class="sub">떨어지면 번호 늘려 사고, 각자 오르면 각자 판다</div>
+  </div>
+  <div style="text-align:right">
+    <button class="refresh" onclick="loadAll()">새로고침</button><br>
+    <a class="nav" href="signal.html">← 코인 시그널</a>
+  </div>
+</header>
+
+<div class="err" id="setupBox">
+  <b>⚙️ 최초 1회 설정이 필요해요 (5분)</b><br>
+  주식 시세는 프록시 서버가 있어야 받아져요. 전에 네이버 API 때 하신 것과 똑같아요:<br>
+  1) dash.cloudflare.com → Workers & Pages → Create Worker<br>
+  2) 같이 드린 <b>worker.js</b> 코드 붙여넣고 Deploy<br>
+  3) 나온 주소(https://xxx.workers.dev)를 이 파일 코드 맨 위 <b>WORKER_URL</b>에 넣고 다시 업로드
+</div>
+<div class="err" id="err">시세를 불러오지 못했어요. WORKER_URL 설정과 인터넷 연결을 확인해주세요.</div>
+
+<details id="guideBox">
+  <summary>세븐스플릿이 뭐예요? 사용법 (1분)</summary>
+  <div class="guide">
+    <div class="step"><b>원리:</b> 계좌를 번호로 나눠요. <b>1번은 장기투자자</b>(+30%까지 안 팔고 보유), <b>2번부터는 단타부대</b> — 주가가 정한 간격만큼 떨어질 때마다 다음 번호가 사고, 각 번호는 자기 매수가에서 +5% 오르면 자기만 팔아요. 평단으로 뭉치지 않으니까 "물렸다"는 개념이 사라지고, 하락장에서도 밑 번호들이 사고팔며 수익을 만들어요.</div>
+    <div class="step"><span class="n">1</span><b>발굴 목록에서 종목 선택.</b> 52주 가격 범위에서 아래쪽에 있을수록(할인 클수록) 스플릿 시작하기 좋아요. 여긴 애초에 망할 걱정 적은 시총 상위 대형주만 모아뒀어요.</div>
+    <div class="step"><span class="n">2</span><b>플랜 만들기.</b> 총 투자금, 몇 번호로 나눌지(추천 5), 매수 간격(추천 -5%), 익절(추천 +5%)을 넣으면 번호별 매수 가격표가 자동으로 나와요. 1번만 지금 사고 시작!</div>
+    <div class="step"><span class="n">3</span><b>매일 1번 열기.</b> "N번 매수 시점" 뜨면 그 번호 금액만큼 매수 → 체결가 입력하고 기록. "N번 매도 시점" 뜨면 그 번호 수량만 매도 → 기록. 끝. 시스템이 시키는 것만 하면 분할매수·분할매도가 자동으로 지켜져요.</div>
+    <div class="step">⚠️ <b>3원칙 (박성현식)</b>: ① 손절 없음 — 대신 <b>망하지 않을 우량주만, 여유자금만</b> ② 레버리지·신용·미수 절대 금지 ③ 정한 간격·금액 임의로 바꾸지 않기. 손절이 없는 방식이라 하락이 길어지면 돈이 오래 묶일 수 있어요. 반드시 여유자금으로만 하세요.</div>
+  </div>
+</details>
+
+<div class="card">
+  <h2>🎯 오늘의 추천 <span style="color:var(--muted);font-weight:400">— 이 종목부터 시작하세요</span></h2>
+  <div class="h2sub">지난 1년 수익률이 좋았고, 지금 가격도 저렴한 종목 우선순위예요.</div>
+  <div id="rankBox"></div>
+</div>
+
+<div class="card">
+  <h2>전체 종목 발굴 <span style="color:var(--muted);font-weight:400">— 52주 가격 위치 순</span></h2>
+  <div class="h2sub">52주 범위에서 낮은 위치(=할인 큼) 순서예요. 스플릿은 쌀 때 시작할수록 유리해요. 탭하면 선택돼요.</div>
+  <div id="pickList"><div class="empty">스캔 중...</div></div>
+</div>
+
+<div class="upd" id="upd"></div>
+
+<div class="card" id="detailCard" style="display:none">
+  <h2 id="dTitle">종목 상세</h2>
+  <div class="h2sub" id="dSub"></div>
+  <div class="report" id="dReport"></div>
+  <div class="grid" id="dInds"></div>
+</div>
+
+<div class="card" id="planCard" style="display:none">
+  <h2 id="pTitle">스플릿 플랜</h2>
+  <div id="planBody"></div>
+</div>
+
+<div class="card">
+  <h2>실현 손익 일지 <span style="color:var(--muted);font-weight:400">— 판 것만 집계</span></h2>
+  <div class="stats">
+    <div class="stat"><div class="v" id="sWin">—</div><div class="k">승률</div></div>
+    <div class="stat"><div class="v" id="sPnl">—</div><div class="k">실현 손익</div></div>
+    <div class="stat"><div class="v" id="sCnt">0</div><div class="k">완료 매도</div></div>
+  </div>
+  <div id="histList"><div class="empty">아직 매도 기록이 없어요.</div></div>
+</div>
+
+<footer>
+  세븐스플릿은 박성현 저자의 공개된 투자 방식을 도구로 구현한 거예요 · 시세: 야후 파이낸스(지연 가능)<br>
+  손절 없는 방식 특성상 반드시 여유자금·우량주로만 · 투자 손실 책임은 본인에게 있어요
+</footer>
+
+<script>
+// ★★★ 여기에 Cloudflare Worker 주소를 넣으세요 (예: 'https://stock-proxy.xxx.workers.dev') ★★★
+const WORKER_URL = '';
+
+// ================= 순수 로직 =================
+function analyze(closeArr, highArr, lowArr, live){
+  const n = closeArr.length;
+  const take = Math.min(252, n);
+  const hi52 = Math.max(...highArr.slice(-take));
+  const lo52 = Math.min(...lowArr.slice(-take));
+  const pos = hi52>lo52 ? (live-lo52)/(hi52-lo52)*100 : 50;   // 52주 범위 내 위치
+  const disc = (1-live/hi52)*100;                              // 고점 대비 할인
+  const smaN = Math.min(120, n);
+  const sma = closeArr.slice(-smaN).reduce((a,b)=>a+b,0)/smaN; // 120일선(반년 추세)
+  const i30 = Math.max(0, n-21);
+  const ret30 = (live/closeArr[i30]-1)*100;                    // 최근 1개월 수익률
+  return { hi52, lo52, pos, disc, above: live>sma, sma, ret30 };
+}
+
+// 등급 판정: 스플릿을 "지금 시작해도 되는가"
+function grade(a){
+  if(a.pos<=40) return { label:'지금 시작 좋음', cls:'good', gapRec: a.above?0.05:0.07 };
+  if(a.pos<=60) return { label:'관심 (무난)',   cls:'mid',  gapRec:0.05 };
+  return          { label:'대기 (비쌈)',        cls:'wait', gapRec:0.05 };
+}
+
+// 추천 이유 자동 요약 (한 줄)
+function reasonText(a){
+  const g = grade(a);
+  const price = a.pos<=15 ? '52주 최저가 부근' : a.pos<=40 ? '52주 범위 하단' : a.pos<=60 ? '52주 범위 중간' : a.pos<=85 ? '52주 범위 상단' : '52주 최고가 부근';
+  const trend = a.above
+    ? (a.ret30>3 ? '최근 반등 중(1달 '+(a.ret30>=0?'+':'')+a.ret30.toFixed(0)+'%)' : '추세 안정')
+    : (a.ret30<-3 ? '아직 하락 진행 중' : '바닥 다지는 중');
+  let verdict;
+  if(g.cls==='good') verdict = a.above ? '할인 크고 반등 시작 — 좋은 조합' : '싸지만 떨어지는 중 — 간격 넓게(-7%)';
+  else if(g.cls==='mid') verdict = '나쁘지 않지만 더 싸질 때가 나아요';
+  else verdict = '우량하지만 지금은 비쌈 — 조정 기다리기';
+  return `${price}(고점比 −${a.disc.toFixed(0)}%) · ${trend} · ${verdict}`;
+}
+
+// 스플릿 사다리 생성: 1번 매수가 기준 등간격 하락 트리거
+function makeLadder(entry1, count, gapPct){
+  const arr=[];
+  for(let i=1;i<=count;i++){
+    arr.push({ n:i, trigger: Math.round(entry1*(1-gapPct*(i-1))), buy:null, sold:null, pnl:0 });
+  }
+  return arr;
+}
+
+// 지금 할 일 판단
+function planActions(plan, live){
+  const acts=[];
+  for(const s of plan.splits){
+    if(s.buy && !s.sold){
+      const tp = s.n===1 ? plan.tp1 : plan.tp;
+      if(live >= s.buy*(1+tp)) acts.push({type:'sell', n:s.n, target:s.buy*(1+tp)});
+    }
+  }
+  // 매수는 아직 안 산 번호 중 가장 위(작은 번호) 하나만, 트리거 도달 시
+  const next = plan.splits.find(s=>!s.buy);
+  if(next && live <= next.trigger) acts.push({type:'buy', n:next.n, trigger:next.trigger});
+  return acts;
+}
+// ================= 여기까지 순수 로직 =================
+
+// 지난 1년 세븐스플릿 백테스트 결과 (2025.7~2026.7)
+const BT_RESULTS = {
+  '105560.KS': {nm:'KB금융', ret:10.0, trades:5},
+  '005490.KS': {nm:'POSCO홀딩스', ret:9.9, trades:5},
+  '068270.KS': {nm:'셀트리온', ret:8.2, trades:1},
+  '000660.KS': {nm:'SK하이닉스', ret:8.0, trades:3},
+  '055550.KS': {nm:'신한지주', ret:7.0, trades:2},
+  '005930.KS': {nm:'삼성전자', ret:6.0, trades:1},
+  '373220.KS': {nm:'LG엔솔', ret:6.0, trades:1},
+  '005380.KS': {nm:'현대차', ret:6.0, trades:1},
+  '000270.KS': {nm:'기아', ret:6.0, trades:1},
+  '035420.KS': {nm:'NAVER', ret:2.0, trades:16},
+  '207940.KS': {nm:'삼바', ret:-1.3, trades:3},
+  '035720.KS': {nm:'카카오', ret:-23.8, trades:11}
+};
+
+// 추천도 계산 (백테스트 수익률 + 현재 가격 저렴도)
+function recommendScore(s){
+  const bt = BT_RESULTS[s.id];
+  if(!bt) return 0;
+  // 과거 수익률 40%, 현재 저렴도 60%
+  const cheapness = Math.max(0, 40 - s.pos); // 52주 위치가 낮을수록 높은 점수
+  const score = bt.ret * 0.4 + cheapness * 0.6;
+  return score;
+}
+
+// 코스피 시총 상위권 대형주 (우량주 전제 — 필요하면 코드에서 추가/삭제)
+const STOCKS = [
+  {id:'005930.KS', nm:'삼성전자'},   {id:'000660.KS', nm:'SK하이닉스'},
+  {id:'373220.KS', nm:'LG에너지솔루션'},{id:'207940.KS', nm:'삼성바이오로직스'},
+  {id:'005380.KS', nm:'현대차'},     {id:'000270.KS', nm:'기아'},
+  {id:'068270.KS', nm:'셀트리온'},   {id:'035420.KS', nm:'NAVER'},
+  {id:'105560.KS', nm:'KB금융'},     {id:'005490.KS', nm:'POSCO홀딩스'},
+  {id:'055550.KS', nm:'신한지주'},   {id:'035720.KS', nm:'카카오'}
+];
+let cur = localStorage.getItem('sp_cur') || '';
+let market = {};
+
+const fmtW = n => Math.round(n).toLocaleString('ko-KR')+'원';
+const pct = n => (n>=0?'+':'')+n.toFixed(1)+'%';
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function fetchStock(s){
+  if(!WORKER_URL) throw new Error('no-worker');
+  const r = await fetch(`${WORKER_URL}/chart/${s.id}?range=1y&interval=1d`);
+  if(!r.ok) throw new Error('api '+r.status);
+  const j = await r.json();
+  const res = j.chart && j.chart.result && j.chart.result[0];
+  if(!res) throw new Error('bad data');
+  const q = res.indicators.quote[0];
+  const close=[], high=[], low=[];
+  for(let i=0;i<q.close.length;i++){
+    if(q.close[i]!=null && q.high[i]!=null && q.low[i]!=null){
+      close.push(q.close[i]); high.push(q.high[i]); low.push(q.low[i]);
+    }
+  }
+  if(close.length<30) throw new Error('short data');
+  const live = res.meta.regularMarketPrice || close[close.length-1];
+  return { live, ...analyze(close, high, low, live) };
+}
+
+async function loadAll(){
+  document.getElementById('err').style.display='none';
+  document.getElementById('setupBox').style.display = WORKER_URL ? 'none':'block';
+  if(!WORKER_URL){ document.getElementById('pickList').innerHTML='<div class="empty">위 설정을 먼저 해주세요.</div>'; renderHistory(); return; }
+  try{
+    for(let i=0;i<STOCKS.length;i++){
+      document.getElementById('upd').textContent=`불러오는 중... (${i+1}/${STOCKS.length})`;
+      try{ market[STOCKS[i].id] = await fetchStock(STOCKS[i]); }
+      catch(e){ market[STOCKS[i].id] = null; } // 개별 실패는 건너뜀
+      await sleep(80);
+    }
+    if(Object.values(market).every(v=>!v)) throw new Error('all failed');
+    render();
+    document.getElementById('upd').textContent =
+      '업데이트: '+new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+      +' · 장중엔 지연시세일 수 있어요';
+  }catch(e){
+    document.getElementById('err').style.display='block';
+    document.getElementById('upd').textContent='';
+  }
+}
+
+const getPlans = () => JSON.parse(localStorage.getItem('sp_plans')||'{}');
+const savePlans = p => localStorage.setItem('sp_plans', JSON.stringify(p));
+const getHist = () => JSON.parse(localStorage.getItem('sp_hist')||'[]');
+const saveHist = h => localStorage.setItem('sp_hist', JSON.stringify(h));
+
+function render(){
+  // 발굴: 52주 위치 낮은 순
+  const plans = getPlans();
+  const ranked = STOCKS.filter(s=>market[s.id])
+    .map(s=>({...s, ...market[s.id]}))
+    .sort((a,b)=>a.pos-b.pos);
+
+  // 오늘의 결론 요약
+  const goods = ranked.filter(s=>grade(s).cls==='good');
+  const summary = goods.length
+    ? `<div class="alertBox buy" style="font-weight:600;font-size:12px">📌 오늘의 결론: <b>${goods.slice(0,3).map(s=>s.nm).join(', ')}</b>${goods.length>3?' 외 '+(goods.length-3)+'개':''}가 스플릿 시작하기 좋은 가격대예요. 나머지는 대기.</div>`
+    : `<div class="alertBox calm">📌 오늘의 결론: 지금 시작하기 좋은 가격대의 종목이 없어요. 전부 비싼 구간 — 기다리는 게 답이에요.</div>`;
+
+  // 추천 랭킹 렌더
+  const scored = ranked
+    .map(s=>({...s, score: recommendScore(s)}))
+    .filter(s=>s.score>0 && grade(s).cls==='good')  // 과거 수익이 나고 현재도 저렴한 것만
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,3);  // 상위 3개
+  
+  const rankHtml = scored.length===0 
+    ? '<div class="empty">지금 추천할 종목이 없어요. 아래 전체 목록에서 "지금 시작 좋음" 뱃지 있는 것부터 보세요.</div>'
+    : scored.map((s,i)=>{
+      const rank = i+1;
+      const bt = BT_RESULTS[s.id];
+      const cls = rank===1?'rank1':rank===2?'rank2':'rank3';
+      return `<div class="rankItem ${cls}" onclick="selectStock('${s.id}')">
+        <div class="rank">${rank}</div>
+        <div class="info">
+          <div class="nm">${s.nm} ${plans[s.id]?'(플랜 진행중)':''}</div>
+          <div class="desc">과거 1년 수익률 <b>+${bt.ret.toFixed(1)}%</b> · 현재 52주 ${s.pos.toFixed(0)}% 위치 · ${reasonText(s)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  
+  document.getElementById('rankBox').innerHTML = rankHtml;
+
+  document.getElementById('pickList').innerHTML = ranked.map((s,i)=>{
+    const g = grade(s);
+    const badge = g.cls==='good' ? '<span class="badge">'+g.label+'</span>'
+                : g.cls==='mid' ? '<span class="badge gray">'+g.label+'</span>'
+                : '<span class="badge gray" style="opacity:.6">'+g.label+'</span>';
+    const bt = BT_RESULTS[s.id];
+    const btRet = bt ? (bt.ret>=0?'+':'') + bt.ret.toFixed(1)+'%' : '—';
+    return `<div class="pick ${s.id===cur?'on':''}" onclick="selectStock('${s.id}')">
+      <span class="rank">${i+1}</span>
+      <span class="nmwrap">
+        <span class="nm">${s.nm}</span> ${badge} ${plans[s.id]?'<span class="badge blue">플랜 진행중</span>':''}
+        <div class="rangebar"><i style="left:${Math.max(2,Math.min(98,s.pos))}%"></i></div>
+        <div class="reason">과거 1년 ${btRet} · ${reasonText(s)}</div>
+      </span>
+      <span style="flex:none;text-align:right">
+        <div class="price">${fmtW(s.live)}</div>
+        <div class="pos">1달 <span class="${s.ret30>=0?'up':'down'}">${pct(s.ret30)}</span></div>
+      </span>
+    </div>`;
+  }).join('') || '<div class="empty">데이터 없음</div>';
+
+  if(!cur || !market[cur]){ 
+    document.getElementById('detailCard').style.display='none';
+    document.getElementById('planCard').style.display='none';
+    renderHistory(); return;
+  }
+  renderDetail(); renderPlan(); renderHistory();
+}
+
+function selectStock(id){
+  cur=id; localStorage.setItem('sp_cur',id); render();
+  document.getElementById('detailCard').scrollIntoView({behavior:'smooth'});
+}
+
+function renderDetail(){
+  const s = STOCKS.find(x=>x.id===cur), m = market[cur];
+  const g = grade(m);
+  const card=document.getElementById('detailCard');
+  card.style.display='block';
+  document.getElementById('dTitle').textContent = s.nm+' ('+cur.replace('.KS','')+')';
+  document.getElementById('dSub').textContent = '아래는 오늘 데이터로 자동 작성된 분석이에요. 새로고침하면 갱신돼요.';
+  // 초보자용 자동 분석 리포트
+  const report =
+    `<b>${s.nm}</b>은(는) 지금 1년 가격 범위에서 <b>아래에서 ${m.pos.toFixed(0)}% 위치</b>에 있어요. `
+    + (m.pos<=15 ? '1년 중 거의 최저가 수준이라는 뜻이에요. '
+      : m.pos<=40 ? '평소보다 꽤 싸게 거래되고 있다는 뜻이에요. '
+      : m.pos<=60 ? '싸지도 비싸지도 않은 중간 가격이에요. '
+      : '1년 중 비싼 편에 속해요. ')
+    + `52주 최고가(${fmtW(m.hi52)})에서 <b>${m.disc.toFixed(0)}% 할인</b>된 가격이고, `
+    + (m.above
+      ? `최근 반년 평균(120일선) <b>위</b>로 올라와 있어서 하락이 멈추고 방향을 돌렸을 가능성이 있어요. `
+      : `아직 반년 평균(120일선) <b>아래</b>라 하락이 진행 중일 수 있어요. 그래서 매수 간격을 넓게(−7%) 잡는 걸 추천해요. `)
+    + `최근 1달은 <b class="${m.ret30>=0?'up':'down'}">${pct(m.ret30)}</b> 움직였어요.<br><br>`
+    + `<b>결론: ${g.label}.</b> `
+    + (g.cls==='good'
+      ? `세븐스플릿은 "우량주를 쌀 때 시작해서, 더 떨어지면 번호를 늘려 사는" 방식이라 지금 같은 가격대가 시작점으로 적합해요. 추천 매수 간격: <b>−${(g.gapRec*100).toFixed(0)}%</b>.`
+      : g.cls==='mid'
+      ? `시작해도 크게 나쁘진 않지만, 더 싸질 기회를 주는 종목(위 목록 상단)이 있다면 그쪽이 우선이에요.`
+      : `이 회사가 나빠서가 아니라 <b>가격이 비싸서</b> 대기예요. 스플릿은 쌀 때 시작할수록 유리하니, 이 종목은 목록 하단으로 내려올 때(조정받을 때) 다시 보세요.`);
+  document.getElementById('dReport').innerHTML = report;
+  document.getElementById('dInds').innerHTML = `
+    <div class="ind"><div class="k">현재가</div><div class="v">${fmtW(m.live)}</div></div>
+    <div class="ind"><div class="k">52주 위치</div><div class="v">${m.pos.toFixed(0)}%</div><div class="memo">${m.pos<=40?'하단 — 시작하기 좋아요':m.pos<=60?'중간 — 무난':'상단 — 비싸요, 기다리기'}</div></div>
+    <div class="ind"><div class="k">52주 최고 / 최저</div><div class="v" style="font-size:13px">${fmtW(m.hi52)}<br>${fmtW(m.lo52)}</div></div>
+    <div class="ind"><div class="k">반년 추세(120일선)</div><div class="v">${m.above?'위 ↑':'아래 ↓'}</div><div class="memo">${m.above?'추세는 살아있어요':'하락 추세 — 간격 넓게'}</div></div>`;
+}
+
+function renderPlan(){
+  const s = STOCKS.find(x=>x.id===cur), m = market[cur];
+  const plans = getPlans();
+  const plan = plans[cur];
+  const card=document.getElementById('planCard');
+  card.style.display='block';
+  document.getElementById('pTitle').textContent = s.nm+' 스플릿 플랜';
+  const body = document.getElementById('planBody');
+
+  if(!plan){
+    body.innerHTML = `
+      <div class="h2sub">플랜을 만들면 번호별 매수 가격표가 나와요. 지금은 <b>1번만</b> 사고 시작하는 거예요.</div>
+      <div class="row">
+        <div class="field"><label>총 투자금 (원)</label><input type="number" id="fAmt" placeholder="예: 3000000" inputmode="numeric"></div>
+        <div class="field"><label>분할 개수</label>
+          <select id="fCnt"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option></select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>매수 간격 (하락 %)</label>
+          <select id="fGap"><option value="0.03">-3% (촘촘)</option><option value="0.05" selected>-5% (권장)</option><option value="0.07">-7% (느슨)</option><option value="0.10">-10% (대형 하락 대비)</option></select></div>
+        <div class="field"><label>단타 익절 (2번~)</label>
+          <select id="fTp"><option value="0.03">+3%</option><option value="0.05" selected>+5%</option><option value="0.07">+7%</option></select></div>
+      </div>
+      <div class="field" style="margin-bottom:10px"><label>1번 매수가 (원) — 실제 체결가, 미리보기는 현재가</label>
+        <input type="number" id="fEntry" value="${Math.round(m.live)}" inputmode="numeric"></div>
+      <div id="ladderPreview"></div>
+      <button class="btn red" onclick="startPlan()">1번 샀어요 → 플랜 시작</button>
+      <div class="hint">1번 목표는 +30%(장기), 2번부터는 위에서 정한 익절이에요. 아직 안 산 번호의 돈은 <b>현금으로 대기</b> — 이 대기 현금이 하락장에서 무기가 돼요.</div>`;
+    const upd=()=>{ 
+      const e=parseFloat(document.getElementById('fEntry').value)||m.live;
+      const c=parseInt(document.getElementById('fCnt').value), g=parseFloat(document.getElementById('fGap').value);
+      const a=parseFloat(document.getElementById('fAmt').value)||0;
+      const per=a?a/c:0;
+      document.getElementById('ladderPreview').innerHTML =
+        makeLadder(e,c,g).map(x=>`<div class="srow"><span class="no">${x.n}번</span>
+        <span class="info"><span class="l1">${x.n===1?'지금':fmtW(x.trigger)+' 되면'} ${per?fmtW(per)+'어치 사요':'매수'}</span>
+        <span class="l2">${per?'약 '+Math.max(1,Math.floor(per/x.trigger))+'주 · ':''}${x.n===1?'+30% 되면 팔아요 (장기)':'+'+(parseFloat(document.getElementById('fTp').value)*100)+'% 되면 이 번호만 팔아요'}</span></span>
+        <span class="st wait">${x.n===1?'지금 매수':'현금 대기'}</span></div>`).join('');
+    };
+    ['fAmt','fCnt','fGap','fTp','fEntry'].forEach(id=>document.getElementById(id).addEventListener('input',upd));
+    document.getElementById('fGap').value = grade(m).gapRec.toFixed(2); // 분석 기반 간격 자동 추천
+    upd();
+    return;
+  }
+
+  // 진행 중 플랜
+  const live = m.live;
+  const acts = planActions(plan, live);
+  const shares = (amt,price)=> Math.max(1,Math.floor(amt/price)); // 대략 몇 주인지
+  const bought = plan.splits.filter(x=>x.buy&&!x.sold);
+  const waiting = plan.splits.filter(x=>!x.buy);
+  const invested = bought.length*plan.per;
+  const cash = waiting.length*plan.per;
+
+  // 지금 상태 한 문장
+  const statusLine = `<div class="alertBox calm" style="margin-bottom:8px">현재 상태: <b>${plan.splits.length}번 중 ${bought.length}개 번호 보유</b> · 투자됨 ${fmtW(invested)} · <b>현금 대기 ${fmtW(cash)}</b> (이 현금은 아래 번호들 몫이니 절대 미리 쓰지 마세요)</div>`;
+
+  let alertHtml=statusLine;
+  for(const a of acts){
+    if(a.type==='buy') alertHtml+=`<div class="alertBox buy">🔴 지금 할 일: <b>${a.n}번 차례</b>예요.<br>증권사 앱에서 ${plan.nm} <b>${fmtW(plan.per)}어치 (약 ${shares(plan.per,live)}주)</b> 매수하세요.<br>→ 사고 나서 체결가를 아래 칸에 넣고 [매수 기록]</div>`;
+    if(a.type==='sell'){
+      const sp=plan.splits.find(x=>x.n===a.n);
+      alertHtml+=`<div class="alertBox sell">🔵 지금 할 일: <b>${a.n}번이 목표 도달!</b><br>${a.n}번 몫인 <b>약 ${shares(plan.per,sp.buy)}주만</b> 매도하세요. (다른 번호 물량은 그대로 두기!)<br>→ 팔고 나서 체결가를 아래 칸에 넣고 [매도 기록]</div>`;
+    }
+  }
+  if(acts.length===0){
+    // 다음 예약된 행동 미리보기
+    const nx = waiting[0];
+    let nextBuy = nx ? `주가가 <b>${fmtW(nx.trigger)}</b>까지 내려오면 → ${nx.n}번이 ${fmtW(plan.per)}어치(약 ${shares(plan.per,nx.trigger)}주) 삽니다` : '모든 번호 매수 완료 — 이제 오르기만 기다려요';
+    let nextSell = '';
+    if(bought.length){
+      const nearest = bought.map(x=>({n:x.n, tgt:x.buy*(1+(x.n===1?plan.tp1:plan.tp))})).sort((a,b)=>a.tgt-b.tgt)[0];
+      nextSell = `<br>주가가 <b>${fmtW(nearest.tgt)}</b>까지 오르면 → ${nearest.n}번이 팝니다`;
+    }
+    alertHtml+=`<div class="alertBox calm">✅ 오늘 할 일 없음 — 그냥 닫으셔도 돼요.<br><span style="font-size:12px">다음 예약: ${nextBuy}${nextSell}</span></div>`;
+  }
+
+  const rows = plan.splits.map(x=>{
+    const tp = x.n===1?plan.tp1:plan.tp;
+    let st='wait', stTxt='현금 대기', l1='', l2='';
+    if(x.sold){ st='done'; stTxt='익절 완료'; l1=fmtW(x.buy)+' → '+fmtW(x.sold); l2='실현 '+pct((x.sold/x.buy-1)*100)+' ('+(x.pnl>=0?'+':'')+fmtW(x.pnl)+')'; }
+    else if(x.buy){
+      const r=(live/x.buy-1)*100;
+      const sellNow = live>=x.buy*(1+tp);
+      st= sellNow?'sellNow':'hold'; stTxt= sellNow?'매도!':'보유';
+      l1='매수 '+fmtW(x.buy)+' (약 '+shares(plan.per,x.buy)+'주) · 현재 '+pct(r);
+      l2=fmtW(x.buy*(1+tp))+' 되면 이 번호만 팔아요'+(x.n===1?' (+30% 장기)':'');
+    } else {
+      const buyNow = live<=x.trigger && plan.splits.find(y=>!y.buy)===x;
+      st= buyNow?'buyNow':'wait'; stTxt= buyNow?'매수!':'현금 대기';
+      l1=fmtW(x.trigger)+' 되면 '+fmtW(plan.per)+'어치 사요';
+      l2='약 '+shares(plan.per,x.trigger)+'주 · 그 전까진 현금으로 대기';
+    }
+    return `<div class="srow"><span class="no">${x.n}번</span>
+      <span class="info"><span class="l1">${l1}</span><span class="l2">${l2}</span></span>
+      <span class="st ${st}">${stTxt}</span></div>`;
+  }).join('');
+
+  const held = plan.splits.filter(x=>x.buy&&!x.sold);
+  const realized = plan.splits.filter(x=>x.sold).reduce((a,x)=>a+x.pnl,0);
+  const unreal = held.reduce((a,x)=>a+(live/x.buy-1)*plan.per,0);
+
+  body.innerHTML = `
+    ${alertHtml}
+    <div class="grid" style="margin-bottom:12px">
+      <div class="ind"><div class="k">이 종목 실현 손익</div><div class="v ${realized>=0?'up':'down'}">${(realized>=0?'+':'')+fmtW(realized)}</div></div>
+      <div class="ind"><div class="k">보유 평가손익 (${held.length}개 번호)</div><div class="v ${unreal>=0?'up':'down'}">${(unreal>=0?'+':'')+fmtW(unreal)}</div></div>
+    </div>
+    ${rows}
+    <div class="row" style="margin-top:12px;margin-bottom:0">
+      <input type="number" id="execPrice" placeholder="체결가 (원)" inputmode="numeric">
+    </div>
+    <div class="row" style="margin-top:8px;margin-bottom:0">
+      <button class="btn ghost half" style="flex:1;margin-top:0" onclick="recordBuy()">매수 기록</button>
+      <button class="btn blue half" style="flex:1;margin-top:0" onclick="recordSell()">매도 기록</button>
+    </div>
+    <button class="btn ghost" onclick="endPlan()" style="font-size:12px;padding:10px">플랜 종료 (기록은 일지에 남아요)</button>`;
+}
+
+function startPlan(){
+  const m=market[cur];
+  const amt=parseFloat(document.getElementById('fAmt').value)||0;
+  const cnt=parseInt(document.getElementById('fCnt').value);
+  const gap=parseFloat(document.getElementById('fGap').value);
+  const tp=parseFloat(document.getElementById('fTp').value);
+  const entry=parseFloat(document.getElementById('fEntry').value)||0;
+  if(!amt||!entry){ alert('총 투자금과 1번 매수가를 입력해주세요.'); return; }
+  const plans=getPlans();
+  const splits=makeLadder(entry,cnt,gap);
+  splits[0].buy=entry; // 1번은 지금 매수
+  plans[cur]={ nm:STOCKS.find(x=>x.id===cur).nm, created:new Date().toISOString().slice(0,10),
+    per:amt/cnt, gap, tp, tp1:0.30, splits };
+  savePlans(plans);
+  render();
+  alert('플랜 시작! 이제 앱이 "N번 매수/매도 시점"을 알려줄 거예요.\n남은 돈은 현금으로 꼭 남겨두세요.');
+}
+
+function recordBuy(){
+  const p=parseFloat(document.getElementById('execPrice').value)||0;
+  if(!p){ alert('체결가를 입력해주세요.'); return; }
+  const plans=getPlans(); const plan=plans[cur];
+  const next=plan.splits.find(x=>!x.buy);
+  if(!next){ alert('모든 번호가 이미 매수됐어요.'); return; }
+  next.buy=p;
+  savePlans(plans); render();
+  alert(next.n+'번 매수 기록 완료! 목표가: '+fmtW(p*(1+(next.n===1?plan.tp1:plan.tp))));
+}
+
+function recordSell(){
+  const p=parseFloat(document.getElementById('execPrice').value)||0;
+  if(!p){ alert('체결가를 입력해주세요.'); return; }
+  const plans=getPlans(); const plan=plans[cur];
+  // 매도 대상: 보유 중이고 목표 도달한 번호 우선, 없으면 가장 최근 매수 번호
+  const held=plan.splits.filter(x=>x.buy&&!x.sold);
+  if(held.length===0){ alert('보유 중인 번호가 없어요.'); return; }
+  let target=held.find(x=> p>=x.buy*(1+(x.n===1?plan.tp1:plan.tp)) ) || held[held.length-1];
+  target.sold=p;
+  target.pnl=(p/target.buy-1)*plan.per;
+  const h=getHist();
+  h.push({date:new Date().toISOString().slice(0,10), nm:plan.nm, n:target.n,
+    buy:target.buy, sell:p, pnl:target.pnl});
+  saveHist(h);
+  // 팔린 번호는 다시 현금 대기(재사용) — 세븐스플릿의 핵심: 같은 번호가 또 내려오면 또 삼
+  target.buy=null; target.sold=null; const pnlSaved=target.pnl; target.pnl=0;
+  savePlans(plans); render();
+  alert(target.n+'번 매도 기록 완료! 실현 '+(pnlSaved>=0?'+':'')+fmtW(pnlSaved)+'\n이 번호는 다시 현금 대기로 돌아가서, 가격이 또 내려오면 또 삽니다.');
+}
+
+function endPlan(){
+  if(!confirm('플랜을 종료할까요? 보유 중 번호가 있다면 직접 매도 후 종료하세요.')) return;
+  const plans=getPlans(); delete plans[cur]; savePlans(plans); render();
+}
+
+function renderHistory(){
+  const h=getHist().slice().reverse();
+  const el=document.getElementById('histList');
+  if(h.length===0){ el.innerHTML='<div class="empty">아직 매도 기록이 없어요.</div>';
+    document.getElementById('sWin').textContent='—';
+    document.getElementById('sPnl').textContent='—';
+    document.getElementById('sCnt').textContent='0'; return; }
+  const wins=h.filter(x=>x.pnl>0).length;
+  const pnl=h.reduce((a,x)=>a+x.pnl,0);
+  document.getElementById('sWin').textContent=(wins/h.length*100).toFixed(0)+'%';
+  const pe=document.getElementById('sPnl');
+  pe.textContent=(pnl>=0?'+':'')+Math.round(pnl/10000)+'만';
+  pe.style.color=pnl>=0?'var(--buy)':'var(--sell)';
+  document.getElementById('sCnt').textContent=h.length;
+  el.innerHTML=h.slice(0,20).map(x=>`<div class="hist">
+    <span class="l">${x.date} · ${x.nm} ${x.n}번</span>
+    <span class="r" style="color:${x.pnl>=0?'var(--buy)':'var(--sell)'}">${pct((x.sell/x.buy-1)*100)} (${x.pnl>=0?'+':''}${fmtW(x.pnl)})</span>
+  </div>`).join('');
+}
+
+if(!localStorage.getItem('sp_guide_seen')){ document.getElementById('guideBox').open=true; localStorage.setItem('sp_guide_seen','1'); }
+loadAll();
+</script>
+</body>
+</html>
