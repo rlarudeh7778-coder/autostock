@@ -153,6 +153,7 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
     <div class="step"><span class="n">1</span><b>발굴 목록에서 종목 선택.</b> 52주 가격 범위에서 아래쪽에 있을수록(할인 클수록) 스플릿 시작하기 좋아요. 여긴 애초에 망할 걱정 적은 시총 상위 대형주만 모아뒀어요.</div>
     <div class="step"><span class="n">2</span><b>플랜 만들기.</b> 총 투자금, 몇 번호로 나눌지(추천 5), 매수 간격(추천 -5%), 익절(추천 +5%)을 넣으면 번호별 매수 가격표가 자동으로 나와요. 1번만 지금 사고 시작!</div>
     <div class="step"><span class="n">3</span><b>매일 1번 열기.</b> "N번 매수 시점" 뜨면 그 번호 금액만큼 매수 → 체결가 입력하고 기록. "N번 매도 시점" 뜨면 그 번호 수량만 매도 → 기록. 끝. 시스템이 시키는 것만 하면 분할매수·분할매도가 자동으로 지켜져요.</div>
+    <div class="step"><span class="n">4</span><b>부계좌로 나누기 (중요!).</b> 한 계좌에서 다 사면 증권사가 평단가를 하나로 합쳐버려요(총평균법). 그러면 "3번은 +5% 수익"인데 계좌 화면엔 마이너스로 떠서 멘탈이 흔들려요. <b>번호마다 부계좌 하나씩</b> — 1번 주식은 부계좌1에, 2번 주식은 부계좌2에. 그래야 각 계좌 수익률이 이 페이지 숫자와 똑같아져요. 키움 등 대부분 증권사 앱에서 몇 분이면 부계좌를 만들 수 있어요.</div>
     <div class="step">⚠️ <b>3원칙 (박성현식)</b>: ① 손절 없음 — 대신 <b>망하지 않을 우량주만, 여유자금만</b> ② 레버리지·신용·미수 절대 금지 ③ 정한 간격·금액 임의로 바꾸지 않기. 손절이 없는 방식이라 하락이 길어지면 돈이 오래 묶일 수 있어요. 반드시 여유자금으로만 하세요.</div>
   </div>
 </details>
@@ -171,6 +172,7 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
     <button class="btn red" style="width:110px;margin-top:0;flex:none;padding:11px" onclick="searchStock()">분석하기</button>
   </div>
   <div class="hint" id="qStatus"></div>
+  <div class="hint" style="margin-top:6px">검색한 종목은 아래 목록에 "내 종목"으로 추가돼요 · <a href="#" onclick="clearCustom(event)" style="color:var(--muted)">검색 종목 전체 지우기</a></div>
 </div>
 
 <div class="card">
@@ -237,6 +239,13 @@ function analyze(closeArr, highArr, lowArr, live){
   const i30 = Math.max(0, n-21);
   const ret30 = (live/closeArr[i30]-1)*100;                    // 최근 1개월 수익률
   return { hi52, lo52, pos, disc, above: live>sma, sma, ret30 };
+}
+
+// 규모(우량주) 검증: 일평균 거래대금 기준 — 시총 API가 막혀있어 유동성으로 대형주 판별
+function capTier(turn){
+  if(turn>=1000) return {tier:'big',  pass:true,  label:'대형주 ✓ (하루 '+Math.round(turn).toLocaleString()+'억 거래)'};
+  if(turn>=100)  return {tier:'mid',  pass:true,  label:'중형주 (하루 '+Math.round(turn).toLocaleString()+'억) — 간격 넓게, 금액 줄여서'};
+  return           {tier:'small',pass:false, label:'소형/저유동 (하루 '+Math.round(turn).toLocaleString()+'억) — 세븐스플릿 부적합'};
 }
 
 // 등급 판정: 스플릿을 "지금 시작해도 되는가"
@@ -355,15 +364,18 @@ async function fetchStock(s){
   const res = j.chart && j.chart.result && j.chart.result[0];
   if(!res) throw new Error('bad data');
   const q = res.indicators.quote[0];
-  const close=[], high=[], low=[];
+  const close=[], high=[], low=[], turnArr=[];
   for(let i=0;i<q.close.length;i++){
     if(q.close[i]!=null && q.high[i]!=null && q.low[i]!=null){
       close.push(q.close[i]); high.push(q.high[i]); low.push(q.low[i]);
+      if(q.volume && q.volume[i]!=null) turnArr.push(q.close[i]*q.volume[i]);
     }
   }
   if(close.length<30) throw new Error('short data');
   const live = res.meta.regularMarketPrice || close[close.length-1];
-  return { live, ...analyze(close, high, low, live) };
+  const t20 = turnArr.slice(-20);
+  const turn = t20.length ? t20.reduce((a,b)=>a+b,0)/t20.length/1e8 : 0; // 일평균 거래대금(억원)
+  return { live, turn, ...analyze(close, high, low, live) };
 }
 
 async function loadAll(){
@@ -508,6 +520,26 @@ async function askAI(){
   }
 }
 
+// 검색으로 추가한 종목 삭제
+function removeCustom(ev){
+  if(ev) ev.preventDefault();
+  const c = getCustom().filter(x=>x.id!==cur);
+  saveCustom(c);
+  delete market[cur];
+  const plans=getPlans(); delete plans[cur]; savePlans(plans);
+  cur=''; localStorage.setItem('sp_cur','');
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function clearCustom(ev){
+  if(ev) ev.preventDefault();
+  if(!confirm('검색으로 추가한 종목을 전부 지울까요? (기본 12개 대형주는 그대로 남아요)')) return;
+  for(const c of getCustom()){ delete market[c.id]; }
+  saveCustom([]);
+  if(getCustom().length===0 && !STOCKS.find(s=>s.id===cur)){ cur=''; localStorage.setItem('sp_cur',''); }
+  render();
+}
+
 const getPlans = () => JSON.parse(localStorage.getItem('sp_plans')||'{}');
 const savePlans = p => localStorage.setItem('sp_plans', JSON.stringify(p));
 const getHist = () => JSON.parse(localStorage.getItem('sp_hist')||'[]');
@@ -529,7 +561,7 @@ function render(){
   // 추천 랭킹 렌더
   const scored = ranked
     .map(s=>({...s, score: recommendScore(s)}))
-    .filter(s=>s.score>0 && grade(s).cls==='good')  // 과거 수익이 나고 현재도 저렴한 것만
+    .filter(s=>s.score>0 && grade(s).cls==='good' && capTier(s.turn||0).pass)  // 과거 수익 + 저렴 + 규모 검증 통과만
     .sort((a,b)=>b.score-a.score)
     .slice(0,3);  // 상위 3개
   
@@ -560,7 +592,7 @@ function render(){
     return `<div class="pick ${s.id===cur?'on':''}" onclick="selectStock('${s.id}')">
       <span class="rank">${i+1}</span>
       <span class="nmwrap">
-        <span class="nm">${s.nm}</span> ${badge} ${s.custom?'<span class="badge gray">내 종목</span>':''} ${plans[s.id]?'<span class="badge blue">플랜 진행중</span>':''}
+        <span class="nm">${s.nm}</span> ${badge} ${(()=>{const t=capTier(s.turn||0);return t.tier==='small'?'<span class="badge" style="background:#7A2E2E">규모 미달</span>':t.tier==='mid'?'<span class="badge gray">중형</span>':'';})()} ${s.custom?'<span class="badge gray">내 종목</span>':''} ${plans[s.id]?'<span class="badge blue">플랜 진행중</span>':''}
         <div class="rangebar"><i style="left:${Math.max(2,Math.min(98,s.pos))}%"></i></div>
         <div class="reason">과거 1년 ${btRet} · ${reasonText(s)}</div>
       </span>
@@ -604,7 +636,11 @@ function renderDetail(){
     + (m.above
       ? `최근 반년 평균(120일선) <b>위</b>로 올라와 있어서 하락이 멈추고 방향을 돌렸을 가능성이 있어요. `
       : `아직 반년 평균(120일선) <b>아래</b>라 하락이 진행 중일 수 있어요. 그래서 매수 간격을 넓게(−7%) 잡는 걸 추천해요. `)
-    + `최근 1달은 <b class="${m.ret30>=0?'up':'down'}">${pct(m.ret30)}</b> 움직였어요.<br><br>`
+    + `최근 1달은 <b class="${m.ret30>=0?'up':'down'}">${pct(m.ret30)}</b> 움직였어요. `
+    + (()=>{const t=capTier(m.turn||0);
+      return t.tier==='big' ? `규모 검증: <b>통과</b> — 하루 ${Math.round(m.turn).toLocaleString()}억원씩 거래되는 대형주라 "망하지 않을 우량주" 조건에 부합해요.<br><br>`
+        : t.tier==='mid' ? `규모 검증: <b>중형주</b> — 하루 ${Math.round(m.turn).toLocaleString()}억원 거래. 대형주보단 출렁임이 클 수 있으니 간격은 넓게(-7~10%), 금액은 줄여서 하세요.<br><br>`
+        : `규모 검증: <b>⚠️ 미달</b> — 하루 ${Math.round(m.turn).toLocaleString()}억원밖에 거래가 안 돼요. 세븐스플릿은 "망하지 않을 우량주" 전제인데 이 종목은 그 전제가 약해요. <b>비추천.</b><br><br>`;})()
     + `<b>결론: ${g.label}.</b> `
     + (g.cls==='good'
       ? `세븐스플릿은 "우량주를 쌀 때 시작해서, 더 떨어지면 번호를 늘려 사는" 방식이라 지금 같은 가격대가 시작점으로 적합해요. 추천 매수 간격: <b>−${(g.gapRec*100).toFixed(0)}%</b>.`
@@ -616,7 +652,11 @@ function renderDetail(){
     <div class="ind"><div class="k">현재가</div><div class="v">${fmtW(m.live)}</div></div>
     <div class="ind"><div class="k">52주 위치</div><div class="v">${m.pos.toFixed(0)}%</div><div class="memo">${m.pos<=40?'하단 — 시작하기 좋아요':m.pos<=60?'중간 — 무난':'상단 — 비싸요, 기다리기'}</div></div>
     <div class="ind"><div class="k">52주 최고 / 최저</div><div class="v" style="font-size:13px">${fmtW(m.hi52)}<br>${fmtW(m.lo52)}</div></div>
-    <div class="ind"><div class="k">반년 추세(120일선)</div><div class="v">${m.above?'위 ↑':'아래 ↓'}</div><div class="memo">${m.above?'추세는 살아있어요':'하락 추세 — 간격 넓게'}</div></div>`;
+    <div class="ind"><div class="k">반년 추세(120일선)</div><div class="v">${m.above?'위 ↑':'아래 ↓'}</div><div class="memo">${m.above?'추세는 살아있어요':'하락 추세 — 간격 넓게'}</div></div>
+    <div class="ind" style="grid-column:1/-1"><div class="k">규모 검증 (일평균 거래대금 기준)</div><div class="v" style="font-size:13px">${capTier(m.turn||0).label}</div></div>`;
+  // 검색으로 추가한 종목이면 삭제 버튼
+  document.getElementById('dSub').innerHTML = '아래는 오늘 데이터로 자동 작성된 분석이에요. 새로고침하면 갱신돼요.'
+    + (s.custom ? ' <a href="#" onclick="removeCustom(event)" style="color:var(--buy);font-weight:700">[이 종목 목록에서 삭제]</a>' : '');
 }
 
 function renderPlan(){
@@ -645,6 +685,9 @@ function renderPlan(){
       <div class="field" style="margin-bottom:10px"><label>1번 매수가 (원) — 실제 체결가, 미리보기는 현재가</label>
         <input type="number" id="fEntry" value="${Math.round(m.live)}" inputmode="numeric"></div>
       <div id="ladderPreview"></div>
+      <div style="background:var(--wait-bg);border-radius:10px;padding:11px 12px;font-size:12px;color:var(--wait);line-height:1.7;margin-top:10px">
+        <b style="color:var(--text)">⚠️ 중요 — 부계좌로 나눠서 하세요.</b> 한 계좌에서 여러 번 사면 증권사가 전부 <b>하나의 평단가로 합쳐버려서</b>(총평균법), "3번이 +5%"인데 계좌엔 마이너스로 보이는 일이 생겨요. 번호마다 부계좌 하나씩(키움 등은 앱에서 몇 분이면 개설) 쓰면 각 계좌 평단가 = 그 번호 매수가라서 이 페이지 숫자와 실제 계좌가 정확히 일치해요.
+      </div>
       <button class="btn red" onclick="startPlan()">1번 샀어요 → 플랜 시작</button>
       <div class="hint">1번 목표는 +30%(장기), 2번부터는 위에서 정한 익절이에요. 아직 안 산 번호의 돈은 <b>현금으로 대기</b> — 이 대기 현금이 하락장에서 무기가 돼요.</div>`;
     const upd=()=>{ 
@@ -678,10 +721,10 @@ function renderPlan(){
 
   let alertHtml=statusLine;
   for(const a of acts){
-    if(a.type==='buy') alertHtml+=`<div class="alertBox buy">🔴 지금 할 일: <b>${a.n}번 차례</b>예요.<br>증권사 앱에서 ${plan.nm} <b>${fmtW(plan.per)}어치 (약 ${shares(plan.per,live)}주)</b> 매수하세요.<br>→ 사고 나서 체결가를 아래 칸에 넣고 [매수 기록]</div>`;
+    if(a.type==='buy') alertHtml+=`<div class="alertBox buy">🔴 지금 할 일: <b>${a.n}번 차례</b>예요.<br><b>부계좌 ${a.n}번</b>에서 ${plan.nm} <b>${fmtW(plan.per)}어치 (약 ${shares(plan.per,live)}주)</b> 매수하세요.<br>→ 사고 나서 체결가를 아래 칸에 넣고 [매수 기록]</div>`;
     if(a.type==='sell'){
       const sp=plan.splits.find(x=>x.n===a.n);
-      alertHtml+=`<div class="alertBox sell">🔵 지금 할 일: <b>${a.n}번이 목표 도달!</b><br>${a.n}번 몫인 <b>약 ${shares(plan.per,sp.buy)}주만</b> 매도하세요. (다른 번호 물량은 그대로 두기!)<br>→ 팔고 나서 체결가를 아래 칸에 넣고 [매도 기록]</div>`;
+      alertHtml+=`<div class="alertBox sell">🔵 지금 할 일: <b>${a.n}번이 목표 도달!</b><br><b>부계좌 ${a.n}번</b>에 들어있는 <b>약 ${shares(plan.per,sp.buy)}주 전량</b> 매도하세요. (다른 부계좌는 손대지 않기!)<br>→ 팔고 나서 체결가를 아래 칸에 넣고 [매도 기록]</div>`;
     }
   }
   if(acts.length===0){
@@ -712,7 +755,7 @@ function renderPlan(){
       l1=fmtW(x.trigger)+' 되면 '+fmtW(plan.per)+'어치 사요';
       l2='약 '+shares(plan.per,x.trigger)+'주 · 그 전까진 현금으로 대기';
     }
-    return `<div class="srow"><span class="no">${x.n}번</span>
+    return `<div class="srow"><span class="no" style="width:52px">${x.n}번<div style="font-size:9px;color:var(--dim);font-weight:400">부계좌${x.n}</div></span>
       <span class="info"><span class="l1">${l1}</span><span class="l2">${l2}</span></span>
       <span class="st ${st}">${stTxt}</span></div>`;
   }).join('');
