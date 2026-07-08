@@ -366,17 +366,35 @@ let market = {};
 
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 
+// 워커 프록시 (직접 호출 실패 시 우회용) — split.html과 같은 주소
+let WORKER_URL = 'https://delicate-tooth-cb4f.rlarudeh7778.workers.dev';
+if(WORKER_URL && !/^https?:\/\//.test(WORKER_URL)) WORKER_URL = 'https://'+WORKER_URL;
+
+async function getCandles(sym, to){
+  const qs = `market=${sym}&count=200${to?'&to='+encodeURIComponent(to):''}`;
+  // 1차: 업비트 직접
+  try{
+    const r = await fetch(`https://api.upbit.com/v1/candles/days?${qs}`);
+    if(r.status===429){ await sleep(1200); throw new Error('rate'); } // 속도 제한 → 우회
+    if(!r.ok) throw new Error('api '+r.status);
+    return await r.json();
+  }catch(e){
+    // 2차: 워커 우회
+    if(!WORKER_URL) throw e;
+    const r2 = await fetch(`${WORKER_URL}/upbit/candles/days?${qs}`);
+    if(!r2.ok) throw new Error('proxy '+r2.status);
+    return await r2.json();
+  }
+}
+
 async function fetchCoin(c){
   let raw = [], to = '';
   for(let page=0; page<2; page++){
-    const url = `https://api.upbit.com/v1/candles/days?market=${c.sym}&count=200${to?'&to='+encodeURIComponent(to):''}`;
-    const r = await fetch(url);
-    if(!r.ok) throw new Error('api '+r.status);
-    const batch = await r.json();
+    const batch = await getCandles(c.sym, to);
     if(!Array.isArray(batch) || batch.length===0) break;
     raw = raw.concat(batch);
     to = batch[batch.length-1].candle_date_time_utc + 'Z';
-    await sleep(110);
+    await sleep(250);
   }
   const seen = new Set();
   raw = raw.filter(k=>{ if(seen.has(k.candle_date_time_utc)) return false; seen.add(k.candle_date_time_utc); return true; });

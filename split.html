@@ -164,6 +164,16 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
 </div>
 
 <div class="card">
+  <h2>🔍 아무 종목이나 물어보기</h2>
+  <div class="h2sub">종목 이름(한진칼, 하이브...)이나 6자리 코드를 입력하면, 위 종목들처럼 자동 분석해줘요. 코스피·코스닥 다 돼요.</div>
+  <div class="row" style="margin-bottom:0">
+    <input type="text" id="qName" placeholder="예: 한진칼 또는 180640" style="font-family:inherit">
+    <button class="btn red" style="width:110px;margin-top:0;flex:none;padding:11px" onclick="searchStock()">분석하기</button>
+  </div>
+  <div class="hint" id="qStatus"></div>
+</div>
+
+<div class="card">
   <h2>전체 종목 발굴 <span style="color:var(--muted);font-weight:400">— 52주 가격 위치 순</span></h2>
   <div class="h2sub">52주 범위에서 낮은 위치(=할인 큼) 순서예요. 스플릿은 쌀 때 시작할수록 유리해요. 탭하면 선택돼요.</div>
   <div id="pickList"><div class="empty">스캔 중...</div></div>
@@ -176,6 +186,17 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
   <div class="h2sub" id="dSub"></div>
   <div class="report" id="dReport"></div>
   <div class="grid" id="dInds"></div>
+  <div style="margin-top:12px">
+    <button class="btn ghost" style="margin-top:0" onclick="askAI()">🤖 AI에게 현황 묻기 — 최신 뉴스·이슈까지 검색해서 판단</button>
+    <div id="aiKeyBox" style="display:none;margin-top:8px">
+      <div class="hint" style="margin-top:0;margin-bottom:6px">최초 1회: Anthropic API 키를 넣어주세요 (console.anthropic.com → API Keys). 이 브라우저에만 저장되고 회당 몇십 원 수준이에요.</div>
+      <div class="row" style="margin-bottom:0">
+        <input type="password" id="aiKey" placeholder="sk-ant-...">
+        <button class="btn ghost" style="width:80px;margin-top:0;flex:none;padding:11px" onclick="saveAIKey()">저장</button>
+      </div>
+    </div>
+    <div class="report" id="aiResult" style="display:none;margin-top:8px;margin-bottom:0"></div>
+  </div>
 </div>
 
 <div class="card" id="planCard" style="display:none">
@@ -200,7 +221,8 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
 
 <script>
 // ★★★ 여기에 Cloudflare Worker 주소를 넣으세요 (예: 'https://stock-proxy.xxx.workers.dev') ★★★
-const WORKER_URL = 'https://delicate-tooth-cb4f.rlarudeh7778.workers.dev';
+let WORKER_URL = 'https://delicate-tooth-cb4f.rlarudeh7778.workers.dev';
+if(WORKER_URL && !/^https?:\/\//.test(WORKER_URL)) WORKER_URL = 'https://'+WORKER_URL; // https 빠뜨려도 자동 보정
 
 // ================= 순수 로직 =================
 function analyze(closeArr, highArr, lowArr, live){
@@ -298,6 +320,26 @@ const STOCKS = [
   {id:'105560.KS', nm:'KB금융'},     {id:'005490.KS', nm:'POSCO홀딩스'},
   {id:'055550.KS', nm:'신한지주'},   {id:'035720.KS', nm:'카카오'}
 ];
+// 자주 찾는 종목 이름 → 코드 (검색 서버 없이도 바로 인식)
+const NAME_MAP = {
+'한진칼':'180640.KS','대한항공':'003490.KS','HMM':'011200.KS','팬오션':'028670.KS',
+'한화에어로스페이스':'012450.KS','한화에어로':'012450.KS','한화오션':'042660.KS','LIG넥스원':'079550.KS','현대로템':'064350.KS','풍산':'103140.KS',
+'HD현대중공업':'329180.KS','HD한국조선해양':'009540.KS','삼성중공업':'010140.KS','효성중공업':'298040.KS','두산에너빌리티':'034020.KS','두산':'000150.KS','두산로보틱스':'454910.KS',
+'삼성SDI':'006400.KS','LG화학':'051910.KS','SK이노베이션':'096770.KS','포스코퓨처엠':'003670.KS','에코프로':'086520.KQ','에코프로비엠':'247540.KQ',
+'삼성물산':'028260.KS','현대모비스':'012330.KS','현대글로비스':'086280.KS','고려아연':'010130.KS','현대제철':'004020.KS','롯데케미칼':'011170.KS','S-Oil':'010950.KS','에스오일':'010950.KS','GS':'078930.KS','한국전력':'015760.KS','한전':'015760.KS',
+'하나금융지주':'086790.KS','우리금융지주':'316140.KS','메리츠금융지주':'138040.KS','카카오뱅크':'323410.KS','기업은행':'024110.KS',
+'미래에셋증권':'006800.KS','삼성증권':'016360.KS','키움증권':'039490.KS','NH투자증권':'005940.KS',
+'크래프톤':'259960.KS','하이브':'352820.KS','넷마블':'251270.KS','엔씨소프트':'036570.KS','카카오게임즈':'293490.KQ','펄어비스':'263750.KQ','JYP':'035900.KQ','JYP엔터':'035900.KQ','에스엠':'041510.KQ','SM엔터':'041510.KQ',
+'LG전자':'066570.KS','LG디스플레이':'034220.KS','삼성전기':'009150.KS','한미반도체':'042700.KS','DB하이텍':'000990.KS','리노공업':'058470.KQ','SK스퀘어':'402340.KS','레인보우로보틱스':'277810.KQ',
+'삼성생명':'032830.KS','삼성화재':'000810.KS','KT&G':'033780.KS','KT':'030200.KS','SK텔레콤':'017670.KS','SKT':'017670.KS','LG유플러스':'032640.KS',
+'아모레퍼시픽':'090430.KS','LG생활건강':'051900.KS','CJ제일제당':'097950.KS','오리온':'271560.KS','농심':'004370.KS','코웨이':'021240.KS','이마트':'139480.KS','신세계':'004170.KS','롯데쇼핑':'023530.KS',
+'알테오젠':'196170.KQ','HLB':'028300.KQ','셀트리온제약':'068760.KQ','유한양행':'000100.KS','한미약품':'128940.KS','SK바이오팜':'326030.KS'
+};
+
+const getCustom = () => JSON.parse(localStorage.getItem('sp_custom')||'[]');
+const saveCustom = a => localStorage.setItem('sp_custom', JSON.stringify(a));
+const allStocks = () => STOCKS.concat(getCustom());
+
 let cur = localStorage.getItem('sp_cur') || '';
 let market = {};
 
@@ -329,10 +371,11 @@ async function loadAll(){
   document.getElementById('setupBox').style.display = WORKER_URL ? 'none':'block';
   if(!WORKER_URL){ document.getElementById('pickList').innerHTML='<div class="empty">위 설정을 먼저 해주세요.</div>'; renderHistory(); return; }
   try{
-    for(let i=0;i<STOCKS.length;i++){
-      document.getElementById('upd').textContent=`불러오는 중... (${i+1}/${STOCKS.length})`;
-      try{ market[STOCKS[i].id] = await fetchStock(STOCKS[i]); }
-      catch(e){ market[STOCKS[i].id] = null; } // 개별 실패는 건너뜀
+    const LIST = allStocks();
+    for(let i=0;i<LIST.length;i++){
+      document.getElementById('upd').textContent=`불러오는 중... (${i+1}/${LIST.length})`;
+      try{ market[LIST[i].id] = await fetchStock(LIST[i]); }
+      catch(e){ market[LIST[i].id] = null; } // 개별 실패는 건너뜀
       await sleep(80);
     }
     if(Object.values(market).every(v=>!v)) throw new Error('all failed');
@@ -346,6 +389,125 @@ async function loadAll(){
   }
 }
 
+// ---------- 종목 이름/코드 검색 ----------
+async function tryChart(id){
+  try{
+    const r = await fetch(`${WORKER_URL}/chart/${id}?range=1y&interval=1d`);
+    if(!r.ok) return null;
+    const j = await r.json();
+    if(j.chart && j.chart.result && j.chart.result[0]) return j;
+  }catch(e){}
+  return null;
+}
+
+async function searchStock(){
+  const q = (document.getElementById('qName').value||'').trim();
+  const st = document.getElementById('qStatus');
+  if(!q){ st.textContent='종목 이름이나 코드를 입력해주세요.'; return; }
+  st.textContent='찾는 중...';
+  let id=null, nm=q;
+
+  // 1) 이미 목록에 있는 이름?
+  const exist = allStocks().find(s=>s.nm.replace(/\s/g,'')===q.replace(/\s/g,''));
+  if(exist){ selectStock(exist.id); st.textContent=''; return; }
+
+  // 2) 6자리 코드 직접 입력 → 코스피(.KS) 먼저, 안 되면 코스닥(.KQ)
+  if(/^[0-9]{6}$/.test(q)){
+    if(await tryChart(q+'.KS')) id=q+'.KS';
+    else if(await tryChart(q+'.KQ')) id=q+'.KQ';
+    if(id){
+      // 이름은 검색으로 보완 시도
+      try{
+        const r=await fetch(`${WORKER_URL}/search?q=${encodeURIComponent(q)}`);
+        const arr=await r.json();
+        const hit=arr.find(x=>x.code===q);
+        if(hit) nm=hit.name;
+      }catch(e){}
+      if(nm===q) nm=q; // 이름 못 찾으면 코드 그대로
+    }
+  }
+
+  // 3) 내장 이름표에서 찾기
+  if(!id && NAME_MAP[q]) { id=NAME_MAP[q]; }
+
+  // 4) 서버 검색 (네이버) → 코드 받아서 야후 확인
+  if(!id){
+    try{
+      const r = await fetch(`${WORKER_URL}/search?q=${encodeURIComponent(q)}`);
+      const arr = await r.json();
+      for(const c of arr){
+        if(await tryChart(c.code+'.KS')){ id=c.code+'.KS'; nm=c.name; break; }
+        if(await tryChart(c.code+'.KQ')){ id=c.code+'.KQ'; nm=c.name; break; }
+      }
+    }catch(e){}
+  }
+
+  if(!id){ st.textContent='"'+q+'" 종목을 못 찾았어요. 정확한 이름이나 6자리 코드로 다시 시도해주세요.'; return; }
+
+  // 목록에 추가하고 데이터 로드
+  if(!allStocks().find(s=>s.id===id)){
+    const c=getCustom(); c.push({id, nm, custom:true}); saveCustom(c);
+  }
+  st.textContent='분석 중...';
+  try{ market[id] = await fetchStock({id, nm}); }
+  catch(e){ st.textContent='데이터를 못 불러왔어요. 잠시 후 다시 시도해주세요.'; return; }
+  st.textContent='';
+  document.getElementById('qName').value='';
+  selectStock(id);
+}
+
+// ---------- AI 현황 분석 (본인 Anthropic API 키 사용) ----------
+function saveAIKey(){
+  const k=(document.getElementById('aiKey').value||'').trim();
+  if(!k.startsWith('sk-ant')){ alert('sk-ant로 시작하는 키를 넣어주세요.'); return; }
+  localStorage.setItem('sp_aikey',k);
+  document.getElementById('aiKeyBox').style.display='none';
+  askAI();
+}
+
+async function askAI(){
+  const key = localStorage.getItem('sp_aikey')||'';
+  if(!key){ document.getElementById('aiKeyBox').style.display='block'; return; }
+  const s = allStocks().find(x=>x.id===cur), m = market[cur];
+  if(!s||!m) return;
+  const box = document.getElementById('aiResult');
+  box.style.display='block';
+  box.innerHTML='🤖 최신 뉴스 검색하고 판단 중... (10~20초)';
+  const g = grade(m);
+  const prompt = `너는 한국 주식 보조 분석가야. 종목 "${s.nm}(${cur.replace(/\.(KS|KQ)/,'')})"의 최근 1개월 뉴스·공시·이슈를 웹검색으로 확인해.\n`+
+    `기술적 현황(이미 계산됨): 현재가 ${fmtW(m.live)}, 52주 범위 내 위치 ${m.pos.toFixed(0)}%, 고점 대비 -${m.disc.toFixed(0)}%, 반년 추세 ${m.above?'상승':'하락'}, 시스템 판정 "${g.label}".\n`+
+    `"세븐스플릿"(망하지 않을 우량주를 쌀 때 사서, 더 떨어지면 분할 추가매수, 손절 없음) 시작 관점에서 판단해.\n`+
+    `출력 형식(딱 2줄, 한국어, 다른 말 금지):\n1줄: [시작 적합/보류/부적합] 핵심 이유 한 문장\n2줄: 최근 뉴스·리스크 요약 한 문장`;
+  try{
+    const r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:600,
+        messages:[{role:'user',content:prompt}],
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}]
+      })
+    });
+    const j = await r.json();
+    if(j.error){
+      box.innerHTML = '⚠️ '+(j.error.message&&j.error.message.includes('auth')?'API 키가 잘못됐어요. 다시 저장해주세요.':'AI 호출 실패: '+j.error.message);
+      if(String(j.error.type||'').includes('auth')||r.status===401){ localStorage.removeItem('sp_aikey'); document.getElementById('aiKeyBox').style.display='block'; }
+      return;
+    }
+    const text = (j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(' ').trim();
+    box.innerHTML = '🤖 <b>AI 판단</b> (최신 뉴스 반영 · 참고용, 투자 판단은 본인 책임)<br><br>'+
+      text.replace(/\n/g,'<br>');
+  }catch(e){
+    box.innerHTML='⚠️ AI 호출에 실패했어요. 인터넷 연결과 API 키를 확인해주세요.';
+  }
+}
+
 const getPlans = () => JSON.parse(localStorage.getItem('sp_plans')||'{}');
 const savePlans = p => localStorage.setItem('sp_plans', JSON.stringify(p));
 const getHist = () => JSON.parse(localStorage.getItem('sp_hist')||'[]');
@@ -354,7 +516,7 @@ const saveHist = h => localStorage.setItem('sp_hist', JSON.stringify(h));
 function render(){
   // 발굴: 52주 위치 낮은 순
   const plans = getPlans();
-  const ranked = STOCKS.filter(s=>market[s.id])
+  const ranked = allStocks().filter(s=>market[s.id])
     .map(s=>({...s, ...market[s.id]}))
     .sort((a,b)=>a.pos-b.pos);
 
@@ -398,7 +560,7 @@ function render(){
     return `<div class="pick ${s.id===cur?'on':''}" onclick="selectStock('${s.id}')">
       <span class="rank">${i+1}</span>
       <span class="nmwrap">
-        <span class="nm">${s.nm}</span> ${badge} ${plans[s.id]?'<span class="badge blue">플랜 진행중</span>':''}
+        <span class="nm">${s.nm}</span> ${badge} ${s.custom?'<span class="badge gray">내 종목</span>':''} ${plans[s.id]?'<span class="badge blue">플랜 진행중</span>':''}
         <div class="rangebar"><i style="left:${Math.max(2,Math.min(98,s.pos))}%"></i></div>
         <div class="reason">과거 1년 ${btRet} · ${reasonText(s)}</div>
       </span>
@@ -418,12 +580,14 @@ function render(){
 }
 
 function selectStock(id){
-  cur=id; localStorage.setItem('sp_cur',id); render();
+  cur=id; localStorage.setItem('sp_cur',id);
+  const ai=document.getElementById('aiResult'); if(ai){ai.style.display='none';ai.innerHTML='';}
+  render();
   document.getElementById('detailCard').scrollIntoView({behavior:'smooth'});
 }
 
 function renderDetail(){
-  const s = STOCKS.find(x=>x.id===cur), m = market[cur];
+  const s = allStocks().find(x=>x.id===cur), m = market[cur];
   const g = grade(m);
   const card=document.getElementById('detailCard');
   card.style.display='block';
@@ -456,7 +620,7 @@ function renderDetail(){
 }
 
 function renderPlan(){
-  const s = STOCKS.find(x=>x.id===cur), m = market[cur];
+  const s = allStocks().find(x=>x.id===cur), m = market[cur];
   const plans = getPlans();
   const plan = plans[cur];
   const card=document.getElementById('planCard');
@@ -585,7 +749,7 @@ function startPlan(){
   const plans=getPlans();
   const splits=makeLadder(entry,cnt,gap);
   splits[0].buy=entry; // 1번은 지금 매수
-  plans[cur]={ nm:STOCKS.find(x=>x.id===cur).nm, created:new Date().toISOString().slice(0,10),
+  plans[cur]={ nm:allStocks().find(x=>x.id===cur).nm, created:new Date().toISOString().slice(0,10),
     per:amt/cnt, gap, tp, tp1:0.30, splits };
   savePlans(plans);
   render();
