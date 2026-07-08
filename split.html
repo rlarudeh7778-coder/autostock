@@ -176,8 +176,30 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
 </div>
 
 <div class="card">
+  <h2>🔥 거래 활발한 종목 스캔 <span style="color:var(--muted);font-weight:400">— 돈이 몰리는 곳</span></h2>
+  <div class="h2sub">거래대금이 큰 종목만 훑어요. 사람(돈)이 몰리는 종목은 움직임이 커서 스플릿 사이클(사고팔기)이 빨리 돌아요. 대신 출렁임도 크니 간격은 넓게!</div>
+  <div class="row" style="margin-bottom:0">
+    <div class="field"><label>최소 거래대금 (하루 평균)</label>
+      <select id="scanMin"><option value="500">500억 이상</option><option value="1000" selected>1,000억 이상 (권장)</option><option value="3000">3,000억 이상 (초대형만)</option></select></div>
+    <button class="btn red" style="width:110px;margin-top:22px;flex:none;padding:11px" onclick="activeScan()">스캔 시작</button>
+  </div>
+  <div class="hint" id="scanStatus">약 30개 활발 종목 후보를 훑는 데 15초쯤 걸려요. 결과는 오늘 하루 저장돼요.</div>
+  <div id="scanList"></div>
+</div>
+
+<div class="card">
   <h2>전체 종목 발굴 <span style="color:var(--muted);font-weight:400">— 52주 가격 위치 순</span></h2>
   <div class="h2sub">52주 범위에서 낮은 위치(=할인 큼) 순서예요. 스플릿은 쌀 때 시작할수록 유리해요. 탭하면 선택돼요.</div>
+  <details style="background:var(--card2);border:none;border-radius:10px;padding:10px 12px;margin-bottom:12px">
+    <summary style="font-size:12px;font-weight:700;color:var(--muted)">여기서 말하는 "우량주 조건"이 정확히 뭐예요?</summary>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-top:8px">
+      세븐스플릿은 손절이 없어서 <b style="color:var(--text)">"망하지 않을 회사"</b>라는 전제가 무너지면 안 돼요. 그래서 이 페이지는 3중으로 거릅니다:<br>
+      <b style="color:var(--text)">① 규모</b> — 기본 목록은 코스피 시가총액 상위 대표 12개로 고정. 검색으로 추가한 종목은 <b style="color:var(--text)">일평균 거래대금</b>으로 검증해요 (하루 1,000억↑ = 대형주 ✓ / 100~1,000억 = 중형, 조건부 / 100억 미만 = 부적합, 추천 차단)<br>
+      <b style="color:var(--text)">② 가격</b> — 52주 가격 범위에서 아래쪽 40% 이내일 때만 "지금 시작 좋음" (박성현의 "적당한 회사를 적당한 가격에")<br>
+      <b style="color:var(--text)">③ 검증된 과거</b> — 지난 1년 세븐스플릿 백테스트에서 수익이 났던 종목만 "오늘의 추천"에 올라와요<br>
+      <span style="color:var(--dim)">셋 다 통과해야 맨 위 🎯 추천에 등장합니다. 하나라도 걸리면 이유와 함께 표시만 돼요.</span>
+    </div>
+  </details>
   <div id="pickList"><div class="empty">스캔 중...</div></div>
 </div>
 
@@ -518,6 +540,69 @@ async function askAI(){
   }catch(e){
     box.innerHTML='⚠️ AI 호출에 실패했어요. 인터넷 연결과 API 키를 확인해주세요.';
   }
+}
+
+// 거래 활발 종목 스캔 후보 풀 (코스피·코스닥에서 평소 거래대금 큰 30개)
+const ACTIVE_POOL = [
+  {id:'012450.KS',nm:'한화에어로스페이스'},{id:'034020.KS',nm:'두산에너빌리티'},{id:'329180.KS',nm:'HD현대중공업'},
+  {id:'042660.KS',nm:'한화오션'},{id:'010140.KS',nm:'삼성중공업'},{id:'064350.KS',nm:'현대로템'},{id:'079550.KS',nm:'LIG넥스원'},
+  {id:'066570.KS',nm:'LG전자'},{id:'006400.KS',nm:'삼성SDI'},{id:'051910.KS',nm:'LG화학'},{id:'096770.KS',nm:'SK이노베이션'},
+  {id:'003670.KS',nm:'포스코퓨처엠'},{id:'086520.KQ',nm:'에코프로'},{id:'247540.KQ',nm:'에코프로비엠'},{id:'196170.KQ',nm:'알테오젠'},
+  {id:'259960.KS',nm:'크래프톤'},{id:'352820.KS',nm:'하이브'},{id:'323410.KS',nm:'카카오뱅크'},{id:'042700.KS',nm:'한미반도체'},
+  {id:'012330.KS',nm:'현대모비스'},{id:'028260.KS',nm:'삼성물산'},{id:'454910.KS',nm:'두산로보틱스'},{id:'277810.KQ',nm:'레인보우로보틱스'},
+  {id:'028300.KQ',nm:'HLB'},{id:'058470.KQ',nm:'리노공업'},{id:'010130.KS',nm:'고려아연'},{id:'011200.KS',nm:'HMM'},
+  {id:'003490.KS',nm:'대한항공'},{id:'015760.KS',nm:'한국전력'},{id:'009150.KS',nm:'삼성전기'}
+];
+
+async function activeScan(){
+  const st = document.getElementById('scanStatus');
+  const listEl = document.getElementById('scanList');
+  const minTurn = parseInt(document.getElementById('scanMin').value);
+  // 오늘 캐시 확인
+  const today = new Date().toISOString().slice(0,10);
+  let cache = JSON.parse(localStorage.getItem('sp_scan')||'null');
+  let results;
+  if(cache && cache.date===today && cache.results && cache.results.length){
+    results = cache.results;
+    st.textContent = '오늘 스캔한 결과예요 (내일 다시 새로 스캔돼요).';
+  }else{
+    results=[];
+    for(let i=0;i<ACTIVE_POOL.length;i++){
+      st.textContent = `훑는 중... (${i+1}/${ACTIVE_POOL.length}) ${ACTIVE_POOL[i].nm}`;
+      try{
+        const m = await fetchStock(ACTIVE_POOL[i]);
+        results.push({id:ACTIVE_POOL[i].id, nm:ACTIVE_POOL[i].nm, live:m.live, turn:m.turn, pos:m.pos, disc:m.disc, ret30:m.ret30, above:m.above});
+        market[ACTIVE_POOL[i].id] = m; // 상세 보기 재사용
+      }catch(e){}
+      await sleep(100);
+    }
+    localStorage.setItem('sp_scan', JSON.stringify({date:today, results}));
+    st.textContent = '스캔 완료! 거래대금 큰 순서예요.';
+  }
+  const filtered = results.filter(r=>r.turn>=minTurn).sort((a,b)=>b.turn-a.turn).slice(0,12);
+  if(filtered.length===0){ listEl.innerHTML='<div class="empty">조건에 맞는 종목이 없어요. 최소 거래대금을 낮춰보세요.</div>'; return; }
+  listEl.innerHTML = filtered.map((s,i)=>{
+    const g = grade(s);
+    const cheapTag = g.cls==='good' ? '<span class="badge">가격도 쌈!</span>' : g.cls==='mid' ? '<span class="badge gray">가격 중간</span>' : '<span class="badge gray" style="opacity:.6">가격 비쌈</span>';
+    return `<div class="pick" onclick="pickScanned('${s.id}','${s.nm}')">
+      <span class="rank">${i+1}</span>
+      <span class="nmwrap">
+        <span class="nm">${s.nm}</span> ${cheapTag}
+        <div class="reason">하루 <b>${Math.round(s.turn).toLocaleString()}억</b> 거래 · 52주 ${s.pos.toFixed(0)}% 위치(고점比 −${s.disc.toFixed(0)}%) · ${s.above?'추세 위':'추세 아래'}</div>
+      </span>
+      <span style="flex:none;text-align:right">
+        <div class="price">${fmtW(s.live)}</div>
+        <div class="pos">1달 <span class="${s.ret30>=0?'up':'down'}">${pct(s.ret30)}</span></div>
+      </span>
+    </div>`;
+  }).join('') + '<div class="hint">⚠️ 활발한 종목은 하루에도 크게 출렁여요. 플랜 만들 때 간격 -7~10%, 금액은 평소의 절반을 추천해요.</div>';
+}
+
+function pickScanned(id, nm){
+  if(!allStocks().find(s=>s.id===id)){
+    const c=getCustom(); c.push({id, nm, custom:true}); saveCustom(c);
+  }
+  selectStock(id);
 }
 
 // 검색으로 추가한 종목 삭제
