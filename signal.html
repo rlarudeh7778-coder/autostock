@@ -173,7 +173,7 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
   <summary>처음이세요? 사용법 (30초)</summary>
   <div class="guide">
     <div class="step"><span class="n">1</span><b>매일 오전 9시 이후 한 번 열기.</b> 아래 "오늘의 추천 종목"에서 대장 코인 확인 → 탭에서 코인 선택 → 큰 글씨가 <b style="color:var(--buy)">매수 신호</b>인지 봐요. 관망이면 그날은 끝, 폰 닫으세요.</div>
-    <div class="step"><span class="n">2</span><b>매수 신호가 뜨면</b> 계산기에 총 투자금 입력 → 나온 금액대로 업비트에서 매수 → 업비트 "평균매수가"를 진입가 칸에 넣고 빨간 버튼으로 기록 → <b>업비트에 손절 주문까지 즉시 설정.</b> 분할매수를 켜면 2번 나눠 사는 금액과 가격을 알려줘요.</div>
+    <div class="step"><span class="n">2</span><b>매수 신호가 뜨면</b> 계산기에 총 투자금 입력 → 나온 금액대로 업비트에서 매수 → 업비트 "평균매수가"를 진입가 칸에 넣고 빨간 버튼으로 기록 → <b>업비트에 손절 주문까지 즉시 설정.</b> 분할매수를 켜면 2번 나눠 사는 금액과 가격을 알려줘요.<br><span style="color:var(--dim)">이미 직접 사둔 게 있으면 계산기 위의 <b>"이미 샀어요"</b> 탭을 쓰세요. 오늘 산 평단·금액만 넣으면 그 물량만 따로 관리돼요 (예전 물량·다른 코인과 안 섞임).</span></div>
     <div class="step"><span class="n">3</span><b>보유 중엔</b> "보유 중" 카드가 다 알려줘요: 현재 수익률, 손익분기점, 그리고 <b>1차 익절(절반 팔기) 도달 시 알림</b> → 절반 팔고 버튼 누르면 손절이 본전으로 올라가서 <b>그 거래는 잃을 수 없는 거래</b>가 돼요. 나머지는 2차 목표나 청산 신호까지.</div>
     <div class="step">⚠️ <b>철칙 3개</b>: ① 신호 없으면 안 산다 ② 손절 주문은 사자마자 건다 ③ 성적표가 마이너스인 코인·전략은 신호가 떠도 쉰다.</div>
   </div>
@@ -214,33 +214,60 @@ footer{font-size:11px;color:var(--dim);text-align:center;margin-top:24px;line-he
 </div>
 
 <div class="card">
-  <h2>얼마어치 살까? (자동 계산)</h2>
-  <div class="h2sub" id="calcSub"></div>
-  <div class="row">
-    <div class="field">
-      <label>내 총 투자금 (원)</label>
-      <input type="number" id="capital" placeholder="예: 1000000" inputmode="numeric">
+  <h2>매수 계산 · 기록</h2>
+  <div class="toggle" style="margin-bottom:14px">
+    <div class="tg on" id="tgCalc" onclick="setMode('calc')">얼마 살지 계산해줘</div>
+    <div class="tg" id="tgOwn" onclick="setMode('own')">이미 샀어요 (직접 입력)</div>
+  </div>
+
+  <!-- 모드 1: 계산 -->
+  <div id="modeCalc">
+    <div class="h2sub" id="calcSub"></div>
+    <div class="row">
+      <div class="field">
+        <label>내 총 투자금 (원)</label>
+        <input type="number" id="capital" placeholder="예: 1000000" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>거래당 감수할 위험</label>
+        <select id="riskPct">
+          <option value="0.005">0.5% (아주 안전)</option>
+          <option value="0.01" selected>1% (권장)</option>
+          <option value="0.02">2% (공격적)</option>
+        </select>
+      </div>
     </div>
-    <div class="field">
-      <label>거래당 감수할 위험</label>
-      <select id="riskPct">
-        <option value="0.005">0.5% (아주 안전)</option>
-        <option value="0.01" selected>1% (권장)</option>
-        <option value="0.02">2% (공격적)</option>
-      </select>
+    <div class="toggle">
+      <div class="tg on" id="tgOne" onclick="setSplit(false)">한 번에 사기</div>
+      <div class="tg" id="tgSplit" onclick="setSplit(true)">2번 나눠 사기 (분할매수)</div>
     </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>실제 진입가 (원) — 업비트 "평균매수가"를 그대로 넣으세요</label>
+      <input type="number" id="entryKrw" placeholder="다 산 뒤에 입력" inputmode="numeric">
+    </div>
+    <div class="result" id="calcResult"></div>
+    <div class="hint" id="calcHint"></div>
+    <button class="btn red" onclick="openTrade()">이 조건으로 매수했어요 → 일지에 기록</button>
   </div>
-  <div class="toggle">
-    <div class="tg on" id="tgOne" onclick="setSplit(false)">한 번에 사기</div>
-    <div class="tg" id="tgSplit" onclick="setSplit(true)">2번 나눠 사기 (분할매수)</div>
+
+  <!-- 모드 2: 이미 산 것 직접 입력 -->
+  <div id="modeOwn" style="display:none">
+    <div class="h2sub">전 재산 말고, <b>오늘 이 코인에 실제로 매수한 것만</b> 넣으세요. 예전 물량이나 다른 코인은 섞지 마세요 — 이 거래만 따로 관리해요.</div>
+    <div class="row">
+      <div class="field">
+        <label>오늘 산 평균단가 (원)</label>
+        <input type="number" id="ownEntry" placeholder="업비트 평균매수가" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>오늘 산 금액 (원)</label>
+        <input type="number" id="ownSize" placeholder="예: 500000" inputmode="numeric">
+      </div>
+    </div>
+    <div class="hint" style="margin-top:0;margin-bottom:8px">💡 수량밖에 모르면 <b>수량 × 평균단가 = 금액</b>이에요. (예: 3.26개 × 115,500원 ≈ 376,000원)</div>
+    <div class="result" id="ownResult"></div>
+    <div class="hint" id="ownHint"></div>
+    <button class="btn red" onclick="openTradeOwn()">이 물량만 일지에 기록 → 손절·익절가 관리</button>
   </div>
-  <div class="field" style="margin-bottom:10px">
-    <label>실제 진입가 (원) — 업비트 "평균매수가"를 그대로 넣으세요</label>
-    <input type="number" id="entryKrw" placeholder="다 산 뒤에 입력" inputmode="numeric">
-  </div>
-  <div class="result" id="calcResult"></div>
-  <div class="hint" id="calcHint"></div>
-  <button class="btn red" onclick="openTrade()">이 조건으로 매수했어요 → 일지에 기록</button>
 </div>
 
 <div class="card">
@@ -612,6 +639,60 @@ document.getElementById('capital').addEventListener('input', ()=>{localStorage.s
 document.getElementById('riskPct').addEventListener('change', calc);
 document.getElementById('entryKrw').addEventListener('input', calc);
 document.getElementById('capital').value = localStorage.getItem('sig_cap')||'';
+
+// ---------- 모드 전환 (계산 / 이미 샀어요) ----------
+let calcMode = 'calc';
+function setMode(mode){
+  calcMode = mode;
+  document.getElementById('tgCalc').classList.toggle('on', mode==='calc');
+  document.getElementById('tgOwn').classList.toggle('on', mode==='own');
+  document.getElementById('modeCalc').style.display = mode==='calc' ? 'block' : 'none';
+  document.getElementById('modeOwn').style.display  = mode==='own'  ? 'block' : 'none';
+  if(mode==='own') ownCalc();
+}
+
+// "이미 샀어요" — 오늘 실제 매수분만으로 손절/익절가 계산
+function ownCalc(){
+  const s = STRATS[curStrat];
+  const entry = parseFloat(document.getElementById('ownEntry').value)||0;
+  const size  = parseFloat(document.getElementById('ownSize').value)||0;
+  if(!entry){
+    document.getElementById('ownResult').innerHTML='';
+    document.getElementById('ownHint').innerHTML='오늘 산 <b>평균단가</b>를 넣으면 손절가·익절가가 나와요.';
+    return;
+  }
+  const stopP = entry*(1-s.stop);
+  const t1P   = entry*(1+s.stop);
+  const tpP   = s.tp ? entry*(1+s.tp) : null;
+  document.getElementById('ownResult').innerHTML =
+    `<div class="rline big"><span class="k">오늘 이 거래 투자금</span><span class="v">${size?fmtW(size):'—'}</span></div>
+     <div class="rline"><span class="k">손절 닿으면 잃는 돈</span><span class="v">${size?'-'+fmtW(size*s.stop):'—'}</span></div>
+     <div class="rline sect"><span class="k">업비트에 걸 가격 (오늘 평단 기준)</span><span class="v"></span></div>
+     <div class="rline"><span class="k">🚨 손절가 (−${(s.stop*100).toFixed(1)}%)</span><span class="v">${fmtW(stopP)}</span></div>
+     <div class="rline"><span class="k">🎯 1차 익절 · 절반 (+${(s.stop*100).toFixed(1)}%)</span><span class="v">${fmtW(t1P)}</span></div>
+     <div class="rline"><span class="k">🎯 2차 익절 · 나머지 ${s.tp?'(+'+(s.tp*100).toFixed(0)+'%)':''}</span><span class="v">${tpP?fmtW(tpP):'없음 — 추세 끝까지'}</span></div>`;
+  document.getElementById('ownHint').innerHTML =
+    '이 손절가('+fmtW(stopP)+')를 업비트 <b>예약-지정가</b>로 걸어두세요. 전 재산이 아니라 <b>오늘 산 이 물량만</b> 기준이라, 예전 비트코인·SOL 물량과 안 섞여요.';
+}
+document.getElementById('ownEntry').addEventListener('input', ownCalc);
+document.getElementById('ownSize').addEventListener('input', ownCalc);
+
+function openTradeOwn(){
+  const s = STRATS[curStrat];
+  const entry = parseFloat(document.getElementById('ownEntry').value)||0;
+  const size  = parseFloat(document.getElementById('ownSize').value)||0;
+  if(!entry || !size){ alert('오늘 산 평균단가와 금액을 모두 입력해주세요.'); return; }
+  const t = getTrades();
+  t.push({coin:cur, strat:curStrat, date:new Date().toISOString().slice(0,10), entry, size,
+    stop:entry*(1-s.stop), t1:entry*(1+s.stop), tp:s.tp?entry*(1+s.tp):null,
+    t1Done:false, exit:null, note:'직접입력'});
+  saveTrades(t);
+  document.getElementById('ownEntry').value='';
+  document.getElementById('ownSize').value='';
+  ownCalc();
+  render();
+  alert('오늘 산 물량만 기록 완료!\n업비트에서 손절 예약(-'+(s.stop*100).toFixed(1)+'%)도 꼭 걸어두세요.\n손절가: '+fmtW(entry*(1-s.stop)));
+}
 
 // ---------- 일지 ----------
 const getTrades = () => JSON.parse(localStorage.getItem('sig_trades')||'[]');
