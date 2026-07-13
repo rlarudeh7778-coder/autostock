@@ -1,0 +1,12 @@
+# 비밀 키
+.env
+
+# 생성 결과물
+references_*.csv
+references_*.json
+
+# 파이썬
+__pycache__/
+*.pyc
+.venv/
+venv/
