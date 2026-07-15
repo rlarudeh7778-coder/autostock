@@ -48,6 +48,53 @@ export default {
       }
     }
 
+    // 3.5) 네이버 재무지표 우회: /fin/005930  → PER/PBR/ROE/배당 등 (실패해도 앱은 수동입력으로 폴백)
+    let f = p.match(/^\/fin\/([0-9]{6})$/);
+    if (f) {
+      const code = f[1];
+      const tries = [
+        'https://m.stock.naver.com/api/stock/' + code + '/integration',
+        'https://m.stock.naver.com/api/stock/' + code + '/basic'
+      ];
+      for (const u of tries) {
+        try {
+          const r = await fetch(u, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15',
+              'Referer': 'https://m.stock.naver.com/',
+              'Accept': 'application/json'
+            },
+            cf: { cacheTtl: 3600, cacheEverything: true }
+          });
+          if (!r.ok) continue;
+          const j = await r.json();
+          // 지표 추출 (네이버 응답 구조가 자주 바뀌므로 방어적으로 탐색)
+          const out = {};
+          const pick = (obj, keys) => {
+            for (const k of keys) {
+              if (obj && obj[k] != null && obj[k] !== '') { const n = parseFloat(String(obj[k]).replace(/,/g,'')); if (isFinite(n)) return n; }
+            }
+            return null;
+          };
+          const scan = o => {
+            if (!o || typeof o !== 'object') return;
+            if (out.per == null)  out.per  = pick(o, ['per','PER']);
+            if (out.pbr == null)  out.pbr  = pick(o, ['pbr','PBR']);
+            if (out.roe == null)  out.roe  = pick(o, ['roe','ROE']);
+            if (out.eps == null)  out.eps  = pick(o, ['eps','EPS']);
+            if (out.div == null)  out.div  = pick(o, ['dividendRatio','dvr','dividendYield']);
+            if (out.name == null && o.stockName) out.name = o.stockName;
+            for (const v of Object.values(o)) if (v && typeof v === 'object') scan(v);
+          };
+          scan(j);
+          if (out.per != null || out.pbr != null) {
+            return new Response(JSON.stringify(out), { headers: CORS });
+          }
+        } catch (e) {}
+      }
+      return new Response(JSON.stringify({ error: 'no-fin' }), { headers: CORS });
+    }
+
     // 3) 업비트 코인 우회: /upbit/candles/days?market=KRW-BTC&count=200&to=...
     if (p === '/upbit/candles/days') {
       const market = url.searchParams.get('market')||'';
