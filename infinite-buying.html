@@ -161,32 +161,8 @@
   .footer-note{margin-top:40px; font-size:11.5px; color:var(--muted2); line-height:1.7; border-top:1px solid var(--border); padding-top:16px;}
 
   /* quote + news */
-  .top-row{display:grid; grid-template-columns:340px 1fr; gap:20px; margin-bottom:20px;}
-  @media (max-width:860px){ .top-row{grid-template-columns:1fr;} }
-  .quote-ticker-row{display:flex; gap:8px; margin-bottom:14px;}
-  .quote-ticker-row input{flex:1;}
-  .quote-price{font-family:var(--mono); font-size:34px; font-weight:700; line-height:1.1;}
-  .quote-change{font-family:var(--mono); font-size:14px; font-weight:600; margin-top:4px;}
-  .quote-change.pos{color:var(--sell);}
-  .quote-change.neg{color:var(--warn);}
-  .quote-meta{font-size:11.5px; color:var(--muted2); margin-top:8px;}
-  .quote-links{display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;}
-  .quote-links a{
-    font-size:11.5px; color:var(--muted); text-decoration:none; border:1px solid var(--border);
-    padding:5px 9px; border-radius:100px;
-  }
-  .quote-links a:hover{color:var(--text); border-color:var(--muted);}
   .quote-banner{font-size:12px; padding:8px 10px; border-radius:6px; margin-top:10px; display:none;}
   .quote-banner.err{background:var(--warn-dim); color:var(--warn); display:block;}
-  .quote-banner.loading{background:var(--info-dim); color:var(--info); display:block;}
-  .quote-apply-row{display:flex; gap:8px; margin-top:14px;}
-
-  .news-item{padding:12px 0; border-bottom:1px solid var(--border-soft);}
-  .news-item:last-child{border-bottom:none;}
-  .news-item a{color:var(--text); font-size:13px; text-decoration:none; line-height:1.5; font-weight:500;}
-  .news-item a:hover{color:var(--buy);}
-  .news-meta{font-size:11px; color:var(--muted2); margin-top:4px;}
-  .news-empty{font-size:12.5px; color:var(--muted); padding:8px 0;}
 
   .todo-panel{
     border:1px solid var(--border); border-left:3px solid var(--info);
@@ -211,7 +187,7 @@
   <div class="header-top">
     <div class="title-block">
       <h1>SOXL 무한매수법 계산기</h1>
-      <p>라오어式 40분할 무한매수법 (v2.2 / v3.0 로직) — SOXL 실시간 시세 · 매수/매도 주문 계산 · 뉴스 · 백테스트</p>
+      <p>라오어式 40분할 무한매수법 (v2.2 / v3.0 로직) — SOXL 매수/매도 주문 계산 · 매매 기록 · 백테스트</p>
     </div>
     <div class="phase-badge">
       <div>
@@ -234,31 +210,6 @@
 
   <!-- ===================== CALC VIEW ===================== -->
   <section class="view active" id="view-calc">
-
-    <div class="top-row">
-      <div class="panel">
-        <h2>실시간 시세<span class="sub">Yahoo Finance 기준, 15~20분 지연될 수 있어요</span></h2>
-        <div class="quote-ticker-row">
-          <input type="text" id="q-ticker" value="SOXL" maxlength="8">
-          <button class="ghost small" id="q-refresh">새로고침</button>
-        </div>
-        <div id="quote-body">
-          <div class="quote-price" id="q-price">-</div>
-          <div class="quote-change" id="q-change">-</div>
-          <div class="quote-meta" id="q-meta">아직 조회하지 않았습니다</div>
-        </div>
-        <div class="quote-banner" id="q-banner"></div>
-        <div class="quote-apply-row">
-          <button class="ghost small" id="q-apply" style="flex:1;">이 가격을 현재가 칸에 적용</button>
-        </div>
-        <div class="quote-links" id="q-links"></div>
-      </div>
-
-      <div class="panel">
-        <h2>관련 최신 뉴스<span class="sub">Google 뉴스 실시간 검색 결과</span></h2>
-        <div id="news-body"><div class="news-empty">시세를 조회하면 자동으로 함께 불러옵니다.</div></div>
-      </div>
-    </div>
 
     <div class="grid">
       <div>
@@ -486,13 +437,39 @@
           <li><b>주문 화면 진입</b> — 매수 또는 매도 탭을 선택합니다.</li>
           <li>
             <b>주문유형을 LOC로 변경</b> — 기본값은 보통 &quot;지정가&quot;로 되어 있습니다. 주문유형(호가유형) 버튼을 눌러
-            <code>LOC(장마감 지정가)</code>로 바꿔주세요. 매수 화면에서 바꾸면 매수용 LOC, 매도 화면에서 바꾸면 매도용 LOC가 됩니다.
+            <code>LOC(장마감 지정가)</code>로 바꿔주세요. <b>매수 주문은 전부 LOC</b>이지만, <b>매도 주문은 1/4 물량만 LOC이고
+            나머지 3/4 물량은 LOC가 아닌 일반 &quot;지정가&quot;</b>로 넣어야 합니다 (아래에서 다시 설명합니다).
             (키움증권 영웅문, 삼성증권 mPOP 등 대부분의 국내 증권사 해외주식 주문 화면에 있습니다. 앱마다 메뉴 이름/위치는 조금씩 달라요.)
           </li>
+          <li>
+            <b>&quot;시장가&quot; 체크박스는 반드시 해제</b> — 주문유형 아래에 &quot;시장가&quot; 체크박스가 따로 있는 앱이 많습니다.
+            여기 체크가 되어 있으면 단가(가격) 칸을 직접 입력할 수 없고 시장가로 나가버리니, 꼭 체크를 풀고 가격을 손으로 입력하세요.
+          </li>
           <li><b>수량 입력</b> — 이 계산기가 알려주는 반올림된 정수 수량을 그대로 입력합니다.</li>
-          <li><b>가격(지정가) 입력</b> — 이 계산기가 알려주는 주문가를 입력합니다. 매수는 &quot;이 가격 이하일 때만 사줘&quot;, 매도는 &quot;이 가격 이상일 때만 팔아줘&quot;라는 뜻입니다.</li>
-          <li><b>주문 제출</b> — 매수 주문 1~2건, 매도 주문 2건(보유 수량이 있을 때)을 각각 따로 제출합니다.</li>
+          <li><b>가격(단가) 입력</b> — 이 계산기가 알려주는 주문가를 단가 칸에 입력합니다. 매수는 &quot;종가가 이 가격 이하일 때만 사줘&quot;, 매도는 &quot;종가가 이 가격 이상일 때만 팔아줘&quot;라는 뜻입니다.</li>
+          <li><b>주문 제출</b> — 매수 주문 1~2건, 매도 주문 2건(보유 수량이 있을 때)을 각각 따로 제출합니다. 한 화면에서 한 건씩만 넣을 수 있으니, 넣고 → 화면을 다시 열어 → 또 넣는 식으로 반복합니다.</li>
           <li><b>다음 거래일에 반복</b> — 체결 여부와 상관없이 미체결 주문은 자동 취소되므로, 다음 거래일에 새 T값 기준으로 다시 주문을 걸어야 합니다.</li>
+        </ol>
+
+        <h3>보유 수량이 0일 때 (첫 매수)</h3>
+        <p>
+          &quot;오늘의 주문&quot; 탭에서 보유 수량을 0, 현재가를 앱에 뜨는 현재가로 넣으면 매수 주문 2건이 나옵니다.
+          평단가가 없으니 계산기가 자동으로 현재가를 기준가로 씁니다.
+        </p>
+        <ol>
+          <li>매수 화면 → 주문유형 LOC → 시장가 해제</li>
+          <li>계산기의 <b>첫 번째 매수 주문</b>(평단가 LOC, 현재가와 거의 같은 가격) 그대로 수량·단가 입력 후 매수</li>
+          <li>매수 화면을 다시 열어 계산기의 <b>두 번째 매수 주문</b>(현재가+약 10%) 그대로 입력 후 매수</li>
+          <li>다음날 &quot;체결&quot; 탭에서 체결 여부·체결가 확인 → 계산기 &quot;내 매매 기록&quot;에 매수로 기록</li>
+        </ol>
+
+        <h3>보유 수량이 있을 때 (매수 계속 + 매도)</h3>
+        <p>앱 잔고 화면에서 보유수량·평단가를 확인해 계산기에 입력하면 매수 1~2건, 매도 2건이 뜹니다.</p>
+        <ol>
+          <li>매수: 위와 같은 방식으로 LOC 1~2건 제출</li>
+          <li>매도 1건째 (1/4 물량): 매도 화면 → 주문유형 <b>LOC</b> → 계산기의 &quot;1/4 수량&quot; 가격·수량 입력 후 매도</li>
+          <li>매도 2건째 (3/4 물량): 매도 화면을 다시 열어 → 주문유형을 <b>일반 지정가</b>(LOC 아님)로 바꾸고 → 계산기의 &quot;3/4 수량&quot; 가격·수량 입력 후 매도</li>
+          <li>종가가 평단+10%까지 오르면 전량 체결되어 사이클이 끝납니다. 이땐 계산기에서 보유수량·누적매수액을 0으로 되돌리고 다음날 새 사이클로 다시 시작하세요.</li>
         </ol>
 
         <div class="callout info">
@@ -506,7 +483,8 @@
         <h3>왕초보가 자주 하는 실수</h3>
         <ul>
           <li><b>수량을 소수로 입력하려는 실수</b> — 국내 증권사 앱은 대부분 미국주식도 1주 단위로만 주문할 수 있습니다. 이 계산기가 이미 정수로 반올림해서 알려주니 그대로 입력하면 됩니다.</li>
-          <li><b>주문유형을 지정가로 그대로 두는 실수</b> — LOC로 바꾸지 않으면 장중 아무 때나 그 가격에 체결되어버려 무한매수법 로직과 달라집니다.</li>
+          <li><b>매도 2건을 똑같이 LOC로 넣는 실수</b> — 1/4만 LOC이고 3/4은 일반 지정가입니다. 둘 다 LOC로 넣으면 3/4 물량이 장중엔 안 팔리고 종가에만 시도됩니다.</li>
+          <li><b>&quot;시장가&quot; 체크를 안 푸는 실수</b> — 체크되어 있으면 단가를 입력해도 무시되고 시장가로 체결될 수 있습니다.</li>
           <li><b>하루 주문을 깜빡하는 실수</b> — 미체결 주문은 자동 소멸되므로, 매일 밤(정규장 마감 전) 알림을 맞춰두는 걸 추천합니다.</li>
           <li><b>1회 매수 예산이 주가보다 작은 경우</b> — SOXL처럼 주가가 높은 종목은 40분할 예산으로 1주도 못 사는 상황이 생길 수 있습니다. 이때는 분할 횟수를 줄이거나(예: 20분할) 시드를 늘려야 합니다. 이 계산기는 이런 경우 경고 문구를 보여줍니다.</li>
         </ul>
@@ -585,7 +563,6 @@
 
   <div class="footer-note">
     무한매수법·밸류리밸런싱 방법론의 저작권은 라오어(네이버 카페 &quot;무한매수법 &amp; 밸류리밸런싱 공부모임&quot;)에 있습니다.
-    시세·뉴스는 Yahoo Finance / Google 뉴스에서 공개 API를 통해 가져오며 지연·오류가 있을 수 있습니다.
     본 도구는 공개된 설명을 바탕으로 만든 비공식 계산기이며, 투자 결과에 대한 책임은 본인에게 있습니다.
   </div>
 </main>
@@ -638,7 +615,7 @@ async function storageSet(key, value){
 }
 
 let tradeLog = [];   // {id, date, type:'init'|'buy'|'sell', price, qty, memo, createdAt}
-let userSettings = { seed:10000, splits:40, ticker:'SOXL' };
+let userSettings = { seed:10000, splits:40 };
 
 async function loadAll(){
   if(!STORAGE_OK){
@@ -657,7 +634,6 @@ async function loadAll(){
   document.getElementById('l-splits').value = userSettings.splits;
   document.getElementById('c-seed').value = userSettings.seed;
   document.getElementById('c-splits').value = userSettings.splits;
-  document.getElementById('q-ticker').value = userSettings.ticker || 'SOXL';
 
   renderLog();
   syncLogToCalculator(false);
@@ -842,159 +818,6 @@ function fmtQty(n){
   if(n===null||n===undefined||isNaN(n)) return '-';
   return Number(n).toLocaleString(undefined,{maximumFractionDigits:0}) + '주';
 }
-
-// ---------- Live quote ----------
-const CORS_PROXY = (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-let lastQuote = null;
-
-async function fetchQuoteOnce(ticker){
-  const yUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}`;
-  const res = await fetch(CORS_PROXY(yUrl), {cache:'no-store'});
-  if(!res.ok) throw new Error('status '+res.status);
-  const data = await res.json();
-  const result = data && data.chart && data.chart.result && data.chart.result[0];
-  if(!result) throw new Error('no result');
-  const meta = result.meta;
-  const price = meta.regularMarketPrice;
-  const prevClose = (meta.previousClose!=null) ? meta.previousClose : meta.chartPreviousClose;
-  const changePct = (prevClose) ? ((price-prevClose)/prevClose*100) : null;
-  return {
-    ticker: meta.symbol || ticker,
-    name: meta.longName || meta.shortName || ticker,
-    price, prevClose, changePct,
-    currency: meta.currency || 'USD',
-    marketState: meta.marketState || '',
-    time: meta.regularMarketTime ? new Date(meta.regularMarketTime*1000) : new Date()
-  };
-}
-async function fetchQuoteWithRetry(ticker, tries){
-  let lastErr;
-  for(let i=0;i<tries;i++){
-    try{ return await fetchQuoteOnce(ticker); }
-    catch(e){ lastErr=e; await new Promise(r=>setTimeout(r, 700)); }
-  }
-  throw lastErr;
-}
-
-function buildExternalLinks(ticker){
-  const t = encodeURIComponent(ticker);
-  return [
-    {label:'Yahoo Finance', url:`https://finance.yahoo.com/quote/${t}`},
-    {label:'Investing.com', url:`https://www.investing.com/search/?q=${t}`},
-    {label:'네이버 증권 검색', url:`https://finance.naver.com/search/searchList.naver?query=${t}`},
-    {label:'Google 검색', url:`https://www.google.com/search?q=${t}+stock+price`}
-  ];
-}
-
-function renderQuoteLinks(ticker){
-  const wrap = document.getElementById('q-links');
-  wrap.innerHTML = '';
-  buildExternalLinks(ticker).forEach(l=>{
-    wrap.insertAdjacentHTML('beforeend', `<a href="${l.url}" target="_blank" rel="noopener">${l.label} ↗</a>`);
-  });
-}
-
-function setQuoteBanner(type, msg){
-  const el = document.getElementById('q-banner');
-  el.className = 'quote-banner' + (type ? ' '+type : '');
-  el.textContent = msg || '';
-  if(!type){ el.style.display='none'; }
-}
-
-async function refreshQuote(){
-  const tickerInput = document.getElementById('q-ticker');
-  const ticker = (tickerInput.value || 'SOXL').trim().toUpperCase();
-  tickerInput.value = ticker;
-  renderQuoteLinks(ticker);
-  setQuoteBanner('loading', '실시간 시세를 불러오는 중...');
-  try{
-    const q = await fetchQuoteWithRetry(ticker, 2);
-    lastQuote = q;
-    document.getElementById('q-price').textContent = fmt(q.price);
-    const chEl = document.getElementById('q-change');
-    if(q.changePct!=null){
-      chEl.textContent = (q.changePct>=0?'+':'') + q.changePct.toFixed(2) + '% (전일 종가 ' + fmt(q.prevClose) + ')';
-      chEl.className = 'quote-change ' + (q.changePct>=0?'pos':'neg');
-    } else {
-      chEl.textContent = '';
-    }
-    document.getElementById('q-meta').textContent =
-      (q.name?q.name+' · ':'') + q.ticker + ' · 기준시각 ' + q.time.toLocaleString('ko-KR');
-    setQuoteBanner(null, '');
-    checkBudgetWarning(q.price);
-  } catch(e){
-    document.getElementById('q-price').textContent = '-';
-    document.getElementById('q-change').textContent = '';
-    document.getElementById('q-meta').textContent = '자동 조회 실패';
-    setQuoteBanner('err', '실시간 시세를 불러오지 못했어요. 아래 링크에서 직접 확인한 뒤, 현재가 칸에 손으로 입력해주세요.');
-  }
-}
-document.getElementById('q-refresh').addEventListener('click', refreshQuote);
-document.getElementById('q-apply').addEventListener('click', ()=>{
-  if(lastQuote && lastQuote.price){
-    document.getElementById('c-price').value = lastQuote.price;
-    runCalc();
-  } else {
-    alert('아직 불러온 시세가 없습니다. 먼저 새로고침을 눌러주세요.');
-  }
-});
-
-// ---------- News ----------
-async function fetchNewsOnce(ticker){
-  const gUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(ticker+' stock')}&hl=ko&gl=KR&ceid=KR:ko`;
-  const res = await fetch(CORS_PROXY(gUrl), {cache:'no-store'});
-  if(!res.ok) throw new Error('status '+res.status);
-  const text = await res.text();
-  const doc = new DOMParser().parseFromString(text, 'text/xml');
-  const items = Array.from(doc.querySelectorAll('item')).slice(0,7).map(it=>{
-    const title = (it.querySelector('title') && it.querySelector('title').textContent) || '';
-    const link = (it.querySelector('link') && it.querySelector('link').textContent) || '';
-    const pubDate = (it.querySelector('pubDate') && it.querySelector('pubDate').textContent) || '';
-    const sourceEl = it.querySelector('source');
-    const source = sourceEl ? sourceEl.textContent : '';
-    return {title, link, pubDate, source};
-  });
-  return items;
-}
-function timeAgo(pubDateStr){
-  if(!pubDateStr) return '';
-  const d = new Date(pubDateStr);
-  if(isNaN(d.getTime())) return pubDateStr;
-  const diffMs = Date.now()-d.getTime();
-  const hrs = Math.floor(diffMs/3600000);
-  if(hrs < 1) return '방금 전';
-  if(hrs < 24) return hrs+'시간 전';
-  const days = Math.floor(hrs/24);
-  return days+'일 전';
-}
-async function refreshNews(){
-  const ticker = (document.getElementById('q-ticker').value || 'SOXL').trim().toUpperCase();
-  const wrap = document.getElementById('news-body');
-  wrap.innerHTML = '<div class="news-empty">뉴스를 불러오는 중...</div>';
-  try{
-    const items = await fetchNewsOnce(ticker);
-    if(!items.length){
-      wrap.innerHTML = '<div class="news-empty">관련 뉴스를 찾지 못했습니다.</div>';
-      return;
-    }
-    wrap.innerHTML = '';
-    items.forEach(n=>{
-      wrap.insertAdjacentHTML('beforeend', `
-        <div class="news-item">
-          <a href="${n.link}" target="_blank" rel="noopener">${n.title}</a>
-          <div class="news-meta">${n.source || ''}${n.source?' · ':''}${timeAgo(n.pubDate)}</div>
-        </div>`);
-    });
-  } catch(e){
-    const t = encodeURIComponent(ticker+' stock');
-    wrap.innerHTML = `<div class="news-empty">뉴스를 자동으로 불러오지 못했습니다.
-      <a href="https://news.google.com/search?q=${t}&hl=ko&gl=KR&ceid=KR:ko" target="_blank" rel="noopener" style="color:var(--buy);">여기서 직접 확인하기 ↗</a></div>`;
-  }
-}
-
-// initial load
-refreshQuote();
-refreshNews();
 
 // ---------- budget warning ----------
 function checkBudgetWarning(currentPrice){
@@ -1325,12 +1148,6 @@ function runBacktest(){
   }
 }
 document.getElementById('b-run').addEventListener('click', runBacktest);
-
-// persist ticker choice
-document.getElementById('q-ticker').addEventListener('change', async ()=>{
-  userSettings.ticker = document.getElementById('q-ticker').value.trim().toUpperCase();
-  await saveSettings();
-});
 
 // load saved settings + trade log (overrides defaults once resolved)
 loadAll();
