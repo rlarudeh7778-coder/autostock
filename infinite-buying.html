@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>무한매수 주문표 · SOXL</title>
+<title>무한매수 주문표</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
@@ -155,10 +155,6 @@ input[type=number]{-moz-appearance:textfield}
 <header>
   <div class="wrap hrow">
     <div class="brand">무한매수 주문표<small id="hsub">라오어 무한매수법 V4.0</small><button class="who hidden" id="who" title="다른 코드로 바꾸기"></button></div>
-    <div class="cur" role="group" aria-label="표시 통화">
-      <button id="curKRW" aria-pressed="true">₩ 원화</button>
-      <button id="curUSD" aria-pressed="false">$ 달러</button>
-    </div>
   </div>
 </header>
 
@@ -166,134 +162,62 @@ input[type=number]{-moz-appearance:textfield}
 
   <section id="login" class="sheet hidden">
     <h2>내 코드로 열기</h2>
-    <p class="lead">나만 아는 코드를 정해서 입력하세요. 같은 코드를 넣으면 내 기록이 그대로 열리고, 코드가 다르면 완전히 따로 저장돼요. 가족이 한 기기를 같이 써도 섞이지 않아요.</p>
+    <p class="lead">나만 아는 코드를 정해서 입력하세요. 같은 코드를 넣으면 내 입력값이 그대로 열리고, 코드가 다르면 따로 저장돼요.</p>
     <div class="field">
       <label for="lCode">내 코드</label>
       <div class="inp"><input id="lCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="예: 경도0917" style="font-size:18px"></div>
-      <div class="help">남이 짐작하기 어렵게 이름과 숫자를 섞어 4글자 이상으로 정하세요. 코드를 잊으면 기록을 다시 찾을 수 없어요.</div>
+      <div class="help">이름과 숫자를 섞어 4글자 이상으로 정하세요. 코드를 잊으면 기록을 다시 찾을 수 없어요.</div>
     </div>
-    <div class="preview" id="lMode"></div>
     <button class="btn" id="lOpen" disabled>열기</button>
   </section>
 
-  <section id="setup" class="sheet hidden">
-    <h2>처음 한 번만 설정해요</h2>
-    <p class="lead">입력한 내용은 이 기기에만 저장돼요. 다음부터는 매일 <b>종가 하나</b>만 입력하면 됩니다.</p>
-
-    <div class="field">
-      <span class="flabel">종목</span>
-      <div class="seg" id="sTicker">
-        <button data-v="SOXL" aria-pressed="true">SOXL</button>
-        <button data-v="TQQQ" aria-pressed="false">TQQQ</button>
-      </div>
-    </div>
-    <div class="field">
-      <span class="flabel">몇 번에 나눠 살까요?</span>
-      <div class="seg" id="sSplits">
-        <button data-v="20" aria-pressed="false">20번 (공격형)</button>
-        <button data-v="40" aria-pressed="true">40번 (기본)</button>
-      </div>
-    </div>
-    <div class="field">
-      <label for="sPrincipal">이 방법에 쓸 전체 금액</label>
-      <div class="inp"><input id="sPrincipal" class="money" type="number" inputmode="decimal" placeholder="0"><span class="unit cu"></span></div>
-    </div>
-    <div class="field">
-      <span class="flabel">지금 이 종목을 갖고 있나요?</span>
-      <div class="seg" id="sHave">
-        <button data-v="no" aria-pressed="true">없어요, 처음이에요</button>
-        <button data-v="yes" aria-pressed="false">이미 사 둔 게 있어요</button>
-      </div>
-    </div>
-    <div id="sHaveBox" class="hidden">
-      <div class="field">
-        <label for="sQty">갖고 있는 수량</label>
-        <div class="inp"><input id="sQty" type="number" inputmode="numeric" placeholder="0"><span class="unit">주</span></div>
-      </div>
-      <div class="field">
-        <label for="sAvg">평단가 (증권사 앱 잔고의 평균단가)</label>
-        <div class="inp"><input id="sAvg" class="money" type="number" inputmode="decimal" placeholder="0"><span class="unit cu"></span></div>
-      </div>
-    </div>
-    <div class="field">
-      <label for="sClose">가장 최근 종가</label>
-      <div class="inp"><input id="sClose" class="money" type="number" inputmode="decimal" placeholder="0"><span class="unit cu"></span></div>
-      <div class="help">증권사 앱에서 전일 종가(장이 끝났을 때 가격)를 보고 입력하세요.</div>
-    </div>
-    <div class="preview" id="sPreview"></div>
-    <button class="btn" id="sStart" disabled>시작하기</button>
-  </section>
-
   <section id="main" class="hidden">
+    <div class="sheet">
+      <h2>내 상황 입력</h2>
+      <p class="lead">증권사 앱 잔고를 보고 넣으면 바로 오늘 주문이 나와요. 입력값은 자동 저장돼요.</p>
+      <div class="field">
+        <span class="flabel">종목</span>
+        <div class="seg" id="fTicker">
+          <button data-v="SOXL">SOXL</button>
+          <button data-v="TQQQ">TQQQ</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="flabel">분할</span>
+        <div class="seg" id="fSplits">
+          <button data-v="20">20분할</button>
+          <button data-v="40">40분할</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fSeed">총 시드 (원금)</label>
+        <div class="inp"><input id="fSeed" type="number" inputmode="decimal" placeholder="0"><span class="unit">달러</span></div>
+      </div>
+      <div class="row2" style="margin-top:16px">
+        <div class="field">
+          <label for="fQty">보유 수량</label>
+          <div class="inp"><input id="fQty" type="number" inputmode="numeric" placeholder="0"><span class="unit">주</span></div>
+        </div>
+        <div class="field">
+          <label for="fAvg">평단가</label>
+          <div class="inp"><input id="fAvg" type="number" inputmode="decimal" placeholder="0"><span class="unit">달러</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fPrice">현재가</label>
+        <div class="inp"><input id="fPrice" type="number" inputmode="decimal" placeholder="0"><span class="unit">달러</span></div>
+        <div class="help">처음 살 때(보유 0주)는 이 가격 기준으로 주문이 나와요.</div>
+      </div>
+    </div>
+
     <div class="sheet" id="status"></div>
 
-    <div class="otitle"><h2>오늘 밤 넣을 주문</h2><span id="oCount"></span></div>
+    <div class="otitle"><h2>오늘 넣을 주문</h2><span id="oCount"></span></div>
     <div id="orders"></div>
-
-    <section class="sheet" id="settle">
-      <h2>장이 끝나면: 종가 입력</h2>
-      <p class="lead">다음날 아침 증권사 앱에서 <b>종가</b>를 확인해 넣으면, 어떤 주문이 체결됐는지 자동으로 계산하고 오늘 밤 주문을 새로 만들어요.</p>
-      <div class="row2">
-        <div class="field">
-          <label for="cClose">종가</label>
-          <div class="inp"><input id="cClose" class="money" type="number" inputmode="decimal" placeholder="0"><span class="unit cu"></span></div>
-        </div>
-        <div class="field">
-          <label for="cDate">날짜</label>
-          <div class="inp"><input id="cDate" type="date" style="font-size:15px"></div>
-        </div>
-      </div>
-      <div id="cStar" class="field hidden">
-        <label for="cStarIn">최근 5거래일 종가 평균</label>
-        <div class="inp"><input id="cStarIn" class="money" type="number" inputmode="decimal" placeholder="0"><span class="unit cu"></span></div>
-        <div class="help">리버스 구간의 기준값이에요. 종가 기록이 5일 이상 쌓이면 자동으로 계산돼요.</div>
-      </div>
-      <div class="fills" id="cFills"></div>
-      <button class="btn" id="cApply" disabled>결과 반영하기</button>
-    </section>
-
-    <details class="sheet">
-      <summary>지난 기록</summary>
-      <div class="inner hist"><ul id="hist"></ul></div>
-    </details>
 
     <details class="sheet">
       <summary>처음 쓰는 분을 위한 설명</summary>
       <div class="inner guide" id="guide"></div>
-    </details>
-
-    <details class="sheet">
-      <summary>설정</summary>
-      <div class="inner">
-        <div class="preview" id="storeInfo" style="margin:0 0 18px"></div>
-        <div class="field">
-          <label for="fx">환율 (1달러 = ?원)</label>
-          <div class="inp"><input id="fx" type="number" inputmode="decimal"><span class="unit">원</span></div>
-          <div class="help" id="fxInfo"></div>
-          <button class="linkbtn" id="fxRefresh">지금 환율 다시 불러오기</button>
-        </div>
-        <div class="field">
-          <label class="switch" style="font-size:14px;color:var(--ink);font-weight:700"><input type="checkbox" id="optLadder"> 급락 대비 추가 주문도 보기</label>
-          <div class="help">종가가 크게 떨어지면 1주씩 더 사지는 선택 주문이에요. 주문 수가 늘어나니 익숙해진 뒤 켜세요.</div>
-        </div>
-        <div class="field">
-          <label class="switch" style="font-size:14px;color:var(--ink);font-weight:700"><input type="checkbox" id="optCompound" checked> 수익을 다음 사이클에 다시 투자</label>
-          <div class="help">끄면 사이클이 끝날 때 처음 금액만 다시 쓰고, 수익은 따로 빼 둔 것으로 계산해요.</div>
-        </div>
-
-        <h3 style="font-size:15px;margin:26px 0 4px">직접 고치기</h3>
-        <p class="lead" style="margin-bottom:12px">증권사 앱 잔고와 숫자가 다를 때만 쓰세요.</p>
-        <div class="row2">
-          <div class="field"><label for="eQty">보유 수량</label><div class="inp"><input id="eQty" type="number" inputmode="numeric"><span class="unit">주</span></div></div>
-          <div class="field"><label for="eAvg">평단가</label><div class="inp"><input id="eAvg" class="money" type="number" inputmode="decimal"><span class="unit cu"></span></div></div>
-        </div>
-        <div class="row2" style="margin-top:12px">
-          <div class="field"><label for="eCash">남은 현금</label><div class="inp"><input id="eCash" class="money" type="number" inputmode="decimal"><span class="unit cu"></span></div></div>
-          <div class="field"><label for="eT">진행 회차 (T)</label><div class="inp"><input id="eT" type="number" inputmode="decimal" step="0.01"><span class="unit">회</span></div></div>
-        </div>
-        <button class="btn ghost" id="eSave">고친 내용 저장</button>
-        <button class="btn danger" id="reset" style="margin-top:22px">처음부터 다시 설정</button>
-      </div>
     </details>
   </section>
 
@@ -303,12 +227,22 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-/* ---------- 저장소: 웹사이트면 localStorage, Claude 안이면 window.storage ---------- */
-/* ▼ 여러 기기에서 같은 코드로 이어 쓰려면 Supabase 주소와 anon 키를 넣으세요. 비워 두면 기기별로만 저장돼요. */
+/* ▼ 여러 기기에서 같은 코드로 이어 쓰려면 Supabase 주소와 anon 키를 넣으세요. 비워 두면 기기별로 저장돼요. */
 const CLOUD={url:'', key:''};
 const CLOUD_ON=!!(CLOUD.url&&CLOUD.key);
+
+const $=id=>document.getElementById(id);
+const cents=x=>Math.round(x*100)/100;
+const rq=x=>(!isFinite(x)||x<=0)?0:Math.round(x);   // 수량 반올림: 0.5주 이상이면 1주
+const usd=u=>(u==null||!isFinite(u))?'-':(u<0?'-':'')+'$'+Math.abs(u).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const tStr=t=>(Math.round(t*100)/100).toString();
+const BASE={SOXL:20,TQQQ:15};   // V4.0: 별% 시작값이자 익절 % (SOXL +20%, TQQQ +15%)
+
 let CODE=null, PID=null;
-const K_STATE=()=>'mb4-state:'+PID, K_UI=()=>'mb4-ui:'+PID;
+let F={ticker:'SOXL',splits:40,seed:'',qty:'',avg:'',price:'',updatedAt:0};
+
+/* ---------- 저장 ---------- */
+let LS=false; try{localStorage.setItem('__t','1');localStorage.removeItem('__t');LS=true;}catch(e){}
 async function pidOf(code){
   const t='mb4|'+code.trim().toLowerCase();
   try{
@@ -328,64 +262,58 @@ async function cloudCall(fn,body){
     return await r.json();
   }finally{clearTimeout(to);}
 }
-let pushTimer=null, cloudFailed=false;
-function cloudPush(){
-  if(!CLOUD_ON||!PID) return;
-  clearTimeout(pushTimer);
-  pushTimer=setTimeout(async()=>{
-    try{await cloudCall('mb_save',{p_id:PID,p_data:{state:S,ui:U}});cloudFailed=false;}
-    catch(e){if(!cloudFailed)toast('인터넷 저장에 실패했어요. 이 기기에는 저장돼 있어요.');cloudFailed=true;}
-    renderSync();
-  },700);
-}
-let LS=false; try{localStorage.setItem('__t','1');localStorage.removeItem('__t');LS=true;}catch(e){}
-const CS = typeof window!=='undefined' && window.storage && typeof window.storage.get==='function';
-async function sGet(k){
-  if(LS){try{return localStorage.getItem(k);}catch(e){}}
-  if(CS){try{const r=await window.storage.get(k,false);return r?r.value:null;}catch(e){}}
-  return null;
-}
-async function sSet(k,v){
-  if(LS){try{localStorage.setItem(k,v);return;}catch(e){}}
-  if(CS){try{await window.storage.set(k,v,false);}catch(e){}}
+let pushTimer=null;
+function save(){
+  if(!PID) return;
+  F.updatedAt=Date.now();
+  try{localStorage.setItem('mb5:'+PID,JSON.stringify(F));}catch(e){}
+  if(CLOUD_ON){clearTimeout(pushTimer);pushTimer=setTimeout(()=>cloudCall('mb_save',{p_id:PID,p_data:{form:F}}).catch(()=>{}),800);}
 }
 
-/* ---------- 상태 ---------- */
-const BASE={SOXL:20,TQQQ:15};   // 별% 시작값이자 익절 % (V4.0: SOXL 20, TQQQ 15)
-function fresh(){return {setup:false,ticker:'SOXL',splits:40,principal:0,cash:0,qty:0,avg:0,T:0,
-  mode:'normal',revDay:0,revStarManual:null,compound:true,ladder:false,lastClose:null,closes:[],history:[],cycles:0,profitOut:0};}
-let S=fresh();
-let U={cur:'KRW',fx:1350,fxAt:null};
-const $=id=>document.getElementById(id);
-const cents=x=>Math.round(x*100)/100;
-const rq=x=>(!isFinite(x)||x<=0)?0:Math.round(x);   // 수량 반올림: 0.5주 이상이면 1주
-const clone=o=>JSON.parse(JSON.stringify(o));
-function save(){if(!PID)return;S.updatedAt=Date.now();sSet(K_STATE(),JSON.stringify(S));cloudPush();}
-function saveU(){if(!PID)return;sSet(K_UI(),JSON.stringify(U));cloudPush();}
-
-/* ---------- 통화 ---------- */
-function money(usd){
-  if(usd==null||!isFinite(usd)) return '-';
-  const neg=usd<0, a=Math.abs(usd);
-  const s = U.cur==='KRW' ? '₩'+Math.round(a*U.fx).toLocaleString('ko-KR')
-                          : '$'+a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  return (neg?'-':'')+s;
+/* ---------- V4.0 계산 ---------- */
+function calc(){
+  const seed=+F.seed||0, qty=Math.max(0,Math.round(+F.qty||0)), avg=+F.avg||0, price=+F.price||0, splits=F.splits, base=BASE[F.ticker];
+  const per=seed/splits;                                  // 1회 매수금
+  const cost=qty>0&&avg>0? qty*avg : 0;                   // 산 금액
+  const T=per>0? cost/per : 0;                            // 진행 회차
+  const cash=Math.max(0,seed-cost);                       // 남은 현금
+  const left=splits-T;
+  const budget=left>0? cash/left : 0;                     // V4.0: 남은 현금 ÷ 남은 회차
+  const r={seed,qty,avg,price,splits,base,per,cost,T,cash,budget,orders:[],mode:'normal',warn:null};
+  if(!seed){r.empty='총 시드를 넣어 주세요.';return r;}
+  if(qty>0&&!avg){r.empty='평단가를 넣어 주세요.';return r;}
+  if(qty<=0){
+    if(!price){r.empty='처음 살 때는 현재가가 필요해요.';return r;}
+    const pr=cents(price*1.12), q=rq(budget/pr);
+    r.orders.push({side:'buy',type:'LOC',price:pr,qty:q,why:'첫 매수예요. 현재가보다 12% 높게 걸면 거의 무조건 체결되고, 실제로는 그날 종가에 사져요.'});
+    if(q<1) r.warn='1회 매수금으로 1주도 살 수 없어요. 시드를 늘리거나 20분할로 바꿔 주세요.';
+    return r;
+  }
+  if(T>splits-1){
+    r.mode='reverse';
+    const n=Math.floor(qty/(splits/2));
+    r.orders.push({side:'sell',type:'MOC',price:null,qty:n,why:`시드를 거의 다 썼어요(리버스 구간). 첫날은 보유 수량의 1/${splits/2}을 종가에 무조건 팔아요.`});
+    return r;
+  }
+  const sp=base*(1-2*T/splits), star=avg*(1+sp/100);     // 별지점 (40분할 SOXL: 20−T %)
+  const spTxt=(sp>=0?'+':'')+(Math.round(sp*100)/100)+'%';
+  r.star=star; r.sp=sp;
+  if(T<splits/2){
+    const pa=cents(star-0.01), pb=cents(avg);
+    r.orders.push({side:'buy',type:'LOC',price:pa,qty:rq(budget/2/pa),why:`1회 매수금의 절반. 종가가 평단 ${spTxt} 가격보다 낮으면 사져요.`});
+    r.orders.push({side:'buy',type:'LOC',price:pb,qty:rq(budget/2/pb),why:'1회 매수금의 나머지 절반. 종가가 평단가 이하면 사져요.'});
+  }else{
+    const pa=cents(star-0.01);
+    r.orders.push({side:'buy',type:'LOC',price:pa,qty:rq(budget/pa),why:`후반전이라 1회 매수금 전부를 평단 ${spTxt} 가격(평단보다 낮음)에 걸어요.`});
+  }
+  if(!r.orders.some(o=>o.qty>0)) r.warn='1회 매수금으로 1주도 살 수 없어요. 시드를 늘리거나 20분할로 바꿔 주세요.';
+  const qq=rq(qty/4), rest=qty-qq;
+  if(qq>0) r.orders.push({side:'sell',type:'LOC',price:cents(star),qty:qq,why:`보유 수량의 1/4. 종가가 평단 ${spTxt} 가격 이상이면 팔려요.`});
+  if(rest>0) r.orders.push({side:'sell',type:'지정가',price:cents(avg*(1+base/100)),qty:rest,why:`나머지 전부. 평단 +${base}%에 닿으면 팔려요 (수익 실현).`});
+  return r;
 }
-const usdStr=u=>'$'+u.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const toUSD=v=>U.cur==='KRW'? v/U.fx : v;
-const fromUSD=u=>U.cur==='KRW'? Math.round(u*U.fx) : cents(u);
-function readMoney(id){const v=parseFloat($(id).value);return isFinite(v)&&v>0?toUSD(v):null;}
-function setMoney(id,usd){$(id).value=(usd==null||!isFinite(usd))?'':fromUSD(usd);}
-const tStr=t=>(Math.round(t*100)/100).toString();
 
-/* ---------- V4.0 규칙 ---------- */
-const starPct=(s,T)=>BASE[s.ticker]*(1-2*T/s.splits);   // 40분할 SOXL: 20−T / 20분할 SOXL: 20−2T / TQQQ 15−0.75T, 15−1.5T
-function budgetOf(s){const left=s.splits-s.T;return left>0? s.cash/left : s.cash;}   // 1회매수금 = 남은 현금 ÷ (분할수 − T)
-function revStar(s){
-  if(s.revStarManual) return s.revStarManual;
-  if(s.closes.length>=5){const l=s.closes.slice(-5);return l.reduce((a,b)=>a+b.close,0)/5;}
-  return null;
-}
+/* ---------- 화면 ---------- */
 function usDST(){
   const d=new Date();
   const ny=new Date(d.toLocaleString('en-US',{timeZone:'America/New_York'}));
@@ -398,436 +326,135 @@ function whenText(type){
   return '지금 바로 예약 주문으로 넣어도 돼요.';
 }
 
-function plan(s){
-  const p={orders:[],budget:0,star:null,needStar:false,warn:null};
-  const base=BASE[s.ticker];
-  if(s.mode==='reverse'){
-    const n=Math.floor(s.qty/(s.splits/2));
-    if(s.revDay===0){
-      p.orders.push({side:'sell',type:'MOC',price:null,qty:n,role:'revMoc',why:`리버스 첫날은 보유 수량의 1/${s.splits/2}을 종가에 무조건 팔아요 (손실 확정).`});
-      return p;
-    }
-    const st=revStar(s); p.star=st;
-    if(!st){p.needStar=true;return p;}
-    p.orders.push({side:'sell',type:'LOC',price:cents(st),qty:n,role:'revSell',why:'종가가 최근 5거래일 평균 이상이면 팔려요.'});
-    const bp=cents(st-0.01);
-    p.orders.push({side:'buy',type:'LOC',price:bp,qty:rq(s.cash/4/bp),role:'revBuy',why:'남은 현금의 1/4로, 종가가 최근 5거래일 평균보다 낮으면 사져요.'});
-    return p;
-  }
-  const budget=budgetOf(s); p.budget=budget;
-  if(s.qty<=0){
-    if(!s.lastClose){p.needStar=true;return p;}
-    const pr=cents(s.lastClose*1.12), q=rq(budget/pr);
-    p.orders.push({side:'buy',type:'LOC',price:pr,qty:q,role:'first',inc:1,why:'첫 매수예요. 전일 종가보다 12% 높게 걸면 거의 무조건 체결되고, 실제로는 그날 종가에 사져요.'});
-    addLadder(p,budget,q,pr);
-  }else{
-    const sp=starPct(s,s.T), star=s.avg*(1+sp/100); p.star=star;
-    const spTxt=(sp>=0?'+':'')+(Math.round(sp*100)/100)+'%';
-    if(s.T < s.splits/2){
-      const pa=cents(star-0.01), qa=rq(budget/2/pa);
-      const pb=cents(s.avg), qb=rq(budget/2/pb);
-      p.orders.push({side:'buy',type:'LOC',price:pa,qty:qa,role:'star',inc:.5,why:`1회 매수금의 절반. 종가가 평단 ${spTxt} 가격보다 낮으면 사져요.`});
-      p.orders.push({side:'buy',type:'LOC',price:pb,qty:qb,role:'avg',inc:.5,why:'1회 매수금의 나머지 절반. 종가가 평단가 이하면 사져요.'});
-      addLadder(p,budget,qa+qb,Math.min(pa,pb));
-    }else{
-      const pa=cents(star-0.01), qa=rq(budget/pa);
-      p.orders.push({side:'buy',type:'LOC',price:pa,qty:qa,role:'star',inc:1,why:`후반전이라 1회 매수금 전부를 평단 ${spTxt} 가격(평단보다 낮음)에 걸어요.`});
-      addLadder(p,budget,qa,pa);
-    }
-    const qq=rq(s.qty/4), rest=s.qty-qq;
-    if(qq>0) p.orders.push({side:'sell',type:'LOC',price:cents(star),qty:qq,role:'quarter',why:`보유 수량의 1/4. 종가가 평단 ${spTxt} 가격 이상이면 팔려요.`});
-    if(rest>0) p.orders.push({side:'sell',type:'지정가',price:cents(s.avg*(1+base/100)),qty:rest,role:'limit',why:`나머지 전부. 평단 +${base}%에 닿으면 팔려요 (수익 실현).`});
-  }
-  if(!p.orders.some(o=>o.side==='buy'&&o.qty>0&&!o.optional))
-    p.warn='1회 매수금으로 1주도 살 수 없어요. 전체 금액을 늘리거나 20번 나누기로 바꿔 주세요.';
-  return p;
-}
-function addLadder(p,budget,baseQty,below){
-  for(let k=baseQty+1,c=0; c<3 && k<baseQty+60; k++){
-    const pr=cents(budget/k-0.01);
-    if(pr>0 && pr<below-0.009){p.orders.push({side:'buy',type:'LOC',price:pr,qty:1,role:'ladder',optional:true,why:'선택 주문. 종가가 크게 떨어지면 1주 더 사져요.'});c++;below=pr;}
-  }
-}
-const visibleOrders=(s,p)=>p.orders.filter(o=>o.qty>0 && (!o.optional||s.ladder));
-function isFilled(o,close,limitSold){
-  if(o.type==='MOC') return true;
-  if(o.type==='지정가') return !!limitSold;
-  return o.side==='buy'? close<=o.price+1e-9 : close>=o.price-1e-9;
-}
-
-function settle(s,close,limitSold,date){
-  const ord=visibleOrders(s,plan(s));
-  const n=clone(s); delete n.history;
-  const ev={date,close,buys:[],sells:[],T0:s.T};
-  let inc=0,buyAny=false,limitHit=false,quarterHit=false,revSell=false,revBuy=false;
-  ord.forEach(o=>{
-    if(!isFilled(o,close,limitSold)) return;
-    if(o.side==='buy'){
-      const cost=o.qty*close;
-      n.avg=(n.avg*n.qty+cost)/(n.qty+o.qty); n.qty+=o.qty; n.cash-=cost;
-      ev.buys.push({q:o.qty,p:close}); buyAny=true;
-      if(o.inc) inc+=o.inc;
-      if(o.role==='revBuy') revBuy=true;
-    }else{
-      const px=o.type==='지정가'? o.price : close;
-      n.qty-=o.qty; n.cash+=o.qty*px;
-      ev.sells.push({q:o.qty,p:px,pl:o.qty*(px-s.avg)});
-      if(o.role==='limit') limitHit=true;
-      if(o.role==='quarter') quarterHit=true;
-      if(o.role==='revSell'||o.role==='revMoc') revSell=true;
-    }
-  });
-  if(s.mode==='reverse'){
-    let t=s.T;
-    if(revSell) t=t*(1-2/s.splits);            // 20분할 ×0.9, 40분할 ×0.95
-    if(revBuy) t=t+(s.splits-t)*0.25;
-    n.T=t; n.revDay=s.revDay+1;
-  }else if(s.qty<=0){
-    n.T=buyAny?1:0;
-  }else{
-    const f=limitHit?0.25:(quarterHit?0.75:1);   // 지정가 매도 ×0.25, 쿼터 매도 ×0.75
-    n.T=s.T*f+inc;                               // 1회분 매수 +1, 절반 +0.5
-  }
-  n.lastClose=close;
-  n.closes=(s.closes||[]).concat([{date,close}]).slice(-30);
-  if(n.qty<=0){
-    n.qty=0;n.avg=0;n.T=0;n.mode='normal';n.revDay=0;n.revStarManual=null;n.cycles=(s.cycles||0)+1;
-    if(n.compound===false){n.profitOut=(s.profitOut||0)+(n.cash-s.principal);n.cash=s.principal;}
-    else n.principal=n.cash;
-    ev.note='사이클 끝! 전부 팔렸어요. 다음 주문부터 새로 시작해요.';
-  }else if(s.mode==='normal' && n.T>n.splits-1){
-    n.mode='reverse';n.revDay=0;n.revStarManual=null;
-    ev.note='돈을 거의 다 썼어요. 내일부터 리버스 구간 규칙으로 바뀌어요.';
-  }else if(s.mode==='reverse' && close>n.avg*(1-BASE[n.ticker]/100)){
-    n.mode='normal';n.revDay=0;n.revStarManual=null;
-    ev.note='종가가 회복 기준선을 넘었어요. 내일부터 일반 규칙으로 돌아가요.';
-  }else if(s.mode==='reverse'){ n.revStarManual=null; }
-  ev.T1=n.T;
-  const prev=clone(s); delete prev.history;
-  n.history=[{ev,prev}].concat(s.history||[]).slice(0,120);
-  return n;
-}
-
-/* ---------- 화면 ---------- */
 function renderAll(){
-  document.querySelectorAll('.cu').forEach(e=>e.textContent=U.cur==='KRW'?'원':'달러');
-  $('curKRW').setAttribute('aria-pressed',U.cur==='KRW');
-  $('curUSD').setAttribute('aria-pressed',U.cur==='USD');
   const logged=!!PID;
   $('login').classList.toggle('hidden',logged);
+  $('main').classList.toggle('hidden',!logged);
   $('who').classList.toggle('hidden',!logged);
-  if(logged) $('who').textContent='코드 '+CODE+' · 바꾸기';
-  if(!logged){$('setup').classList.add('hidden');$('main').classList.add('hidden');$('hsub').textContent='라오어 무한매수법 V4.0';loginPreview();return;}
-  if(!S.setup){
-    $('setup').classList.remove('hidden');$('main').classList.add('hidden');
-    $('hsub').textContent='라오어 무한매수법 V4.0';setupPreview();return;
-  }
-  $('setup').classList.add('hidden');$('main').classList.remove('hidden');
-  $('hsub').textContent=`${S.ticker} ${S.splits}분할, V4.0 규칙`;
-  renderStatus();renderOrders();renderSettle();renderHist();renderSettings();renderGuide();
+  if(!logged){$('lOpen').disabled=$('lCode').value.trim().length<4;return;}
+  $('who').textContent='코드 '+CODE+' · 바꾸기';
+  $('hsub').textContent=`${F.ticker} ${F.splits}분할, V4.0 규칙`;
+  document.querySelectorAll('#fTicker button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===F.ticker));
+  document.querySelectorAll('#fSplits button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===F.splits));
+  ['seed','qty','avg','price'].forEach(k=>{const el=$('f'+k[0].toUpperCase()+k.slice(1)); if(document.activeElement!==el) el.value=F[k];});
+  renderResult();
+  renderGuide();
 }
 
-function renderStatus(){
-  const s=S, pct=Math.min(100,s.T/s.splits*100);
-  const phase=s.mode==='reverse'?'리버스 구간':(s.qty<=0?'새 사이클 시작':(s.T<s.splits/2?'전반전':'후반전'));
-  const pl=(s.qty>0&&s.lastClose&&s.avg)?(s.lastClose/s.avg-1)*100:null;
-  const plHtml=pl==null?'-':`<span class="${pl>=0?'up':'down'}">${pl>=0?'+':''}${pl.toFixed(2)}%</span>`;
-  const cost=s.qty*s.avg, value=s.qty*(s.lastClose||s.avg), total=s.cash+value;
-  const base0=s.startPrincipal||s.principal;
-  const gain=total+(s.profitOut||0)-base0;
-  const realizedTxt=base0?`<small class="${gain>=0?'up':'down'}" style="text-align:right">처음 금액 대비 ${gain>=0?'+':''}${money(gain)}</small>`:'';
+function renderResult(){
+  const r=calc();
+  if(r.empty){
+    $('status').innerHTML=`<div class="empty" style="border:0;padding:6px 0">${r.empty}</div>`;
+    $('orders').innerHTML=''; $('oCount').textContent=''; return;
+  }
+  const value=r.qty*(r.price||r.avg), pl=value-r.cost, plPct=r.cost?pl/r.cost*100:0;
+  const phase=r.mode==='reverse'?'리버스 구간':(r.qty<=0?'새 사이클 시작':(r.T<r.splits/2?'전반전':'후반전'));
+  const pct=Math.min(100,r.T/r.splits*100);
   $('status').innerHTML=`
     <div class="status-top">
-      <div class="phase num">${tStr(s.T)}회째 <span class="of">/ ${s.splits}회</span></div>
-      <span class="tag ${s.mode==='reverse'?'rev':''}">${phase}</span>
+      <div class="phase num">${tStr(r.T)}회째 <span class="of">/ ${r.splits}회</span></div>
+      <span class="tag ${r.mode==='reverse'?'rev':''}">${phase}</span>
     </div>
     <div class="rail" aria-hidden="true"><i style="width:${pct}%"></i></div>
     <div class="rail-lab"><span>전반전</span><span>후반전</span></div>
     <dl class="facts">
-      <div><dt>보유 수량</dt><dd class="num">${s.qty}주</dd></div>
-      <div><dt>평단가</dt><dd class="num">${s.qty>0?money(s.avg):'-'}</dd></div>
-      <div><dt>산 금액 (보유분 합계)</dt><dd class="num">${money(cost)}</dd></div>
-      <div><dt>지금 가치 (최근 종가)</dt><dd class="num">${s.qty>0&&s.lastClose?money(value):'-'}${s.qty>0&&s.lastClose?`<small class="${value-cost>=0?'up':'down'}">${value-cost>=0?'+':''}${money(value-cost)} (${plHtml.replace(/<[^>]+>/g,'')})</small>`:''}</dd></div>
-      <div><dt>남은 현금</dt><dd class="num">${money(s.cash)}</dd></div>
-      <div><dt>최근 종가</dt><dd class="num">${s.lastClose?money(s.lastClose):'-'}</dd></div>
-      <div class="wide"><dt>총자산 (현금 + 지금 가치)</dt><dd class="num">${money(total)}${realizedTxt}</dd></div>
-    </dl>
-    ${s.mode==='normal'?`<div class="preview">오늘 1회 매수금은 <b class="num">${money(budgetOf(s))}</b>이에요. 남은 현금을 남은 회차로 나눈 값이라 매일 조금씩 달라져요.</div>`:''}`;
-}
-
-function ticketHTML(o,i){
-  const priceTxt=o.price==null?'종가 그대로':money(o.price);
-  const sub=(o.price!=null&&U.cur==='KRW')?`<small>앱 단가 칸에 <b>${usdStr(o.price)}</b> 입력</small>`:'';
-  const typeName=o.type==='LOC'?'LOC (장마감지정가)':o.type==='MOC'?'MOC (장마감시장가)':'지정가';
-  return `<article class="ticket ${o.side}${o.optional?' opt':''}">
-    <div class="stub"><span class="n num">${i}</span><span class="side">${o.side==='buy'?'매수':'매도'}</span></div>
-    <div class="tbody">
-      <div class="ttype">주문유형 <span class="otype">${typeName}</span>${o.optional?'<span>선택</span>':''}</div>
-      <div class="tmain">
-        <div class="tprice num">${priceTxt}${sub}</div>
-        <div class="tqty num">${o.qty}<span>주</span></div>
-      </div>
-      <div class="twhy">${o.why}</div>
-      <div class="twhen">${whenText(o.type)}</div>
-    </div>
-  </article>`;
-}
-
-function renderOrders(){
-  const p=plan(S), ord=visibleOrders(S,p);
+      <div><dt>1회 매수금</dt><dd class="num">${usd(r.budget)}</dd></div>
+      <div><dt>남은 현금</dt><dd class="num">${usd(r.cash)}</dd></div>
+      <div><dt>산 금액 (보유분 합계)</dt><dd class="num">${usd(r.cost)}</dd></div>
+      <div><dt>지금 가치 (현재가 기준)</dt><dd class="num">${r.qty>0&&r.price?usd(value):'-'}${r.qty>0&&r.price?`<small class="${pl>=0?'up':'down'}">${pl>=0?'+':''}${usd(pl)} (${plPct>=0?'+':''}${plPct.toFixed(2)}%)</small>`:''}</dd></div>
+      <div class="wide"><dt>총자산 (남은 현금 + 지금 가치)</dt><dd class="num">${usd(r.cash+value)}</dd></div>
+    </dl>`;
   let h='';
-  if(S.mode==='reverse') h+=`<div class="note" style="margin:0 0 10px"><b>리버스 구간이에요.</b> 돈을 다 써서, 조금씩 팔고 조금씩 사면서 버티는 규칙으로 바뀌었어요. 이 구간의 매도는 손실 확정이지만 규칙대로 지키는 게 원칙이에요. 종가가 평단 −${BASE[S.ticker]}% 위로 올라오면 일반 규칙으로 돌아가요.</div>`;
-  if(p.needStar&&S.mode==='reverse') h+=`<div class="empty">최근 5거래일 종가 평균이 필요해요.<br>아래 &lsquo;종가 입력&rsquo;에서 함께 넣어 주세요.</div>`;
-  else if(!ord.length) h+=`<div class="empty">오늘 넣을 주문이 없어요.</div>`;
-  else ord.forEach((o,i)=>h+=ticketHTML(o,i+1));
-  if(p.warn) h+=`<div class="note">${p.warn}</div>`;
+  if(r.mode==='reverse') h+=`<div class="note" style="margin:0 0 10px"><b>리버스 구간이에요.</b> 시드를 거의 다 써서 조금씩 팔고 조금씩 사면서 버티는 규칙으로 바뀌어요. 둘째 날부터는 최근 5거래일 종가 평균 이상이면 보유 수량의 1/${r.splits/2}을 LOC 매도, 그보다 낮으면 남은 현금의 1/4로 LOC 매수해요. 종가가 평단 −${r.base}% 위로 올라오면 일반 규칙으로 돌아가요.</div>`;
+  const ord=r.orders.filter(o=>o.qty>0);
+  if(!ord.length) h+='<div class="empty">오늘 넣을 주문이 없어요.</div>';
+  ord.forEach((o,i)=>{
+    const typeName=o.type==='LOC'?'LOC (장마감지정가)':o.type==='MOC'?'MOC (장마감시장가)':'지정가';
+    h+=`<article class="ticket ${o.side}">
+      <div class="stub"><span class="n num">${i+1}</span><span class="side">${o.side==='buy'?'매수':'매도'}</span></div>
+      <div class="tbody">
+        <div class="ttype">주문유형 <span class="otype">${typeName}</span></div>
+        <div class="tmain"><div class="tprice num">${o.price==null?'종가 그대로':usd(o.price)}</div><div class="tqty num">${o.qty}<span>주</span></div></div>
+        <div class="twhy">${o.why}</div>
+        <div class="twhen">${whenText(o.type)}</div>
+      </div></article>`;
+  });
+  if(r.warn) h+=`<div class="note">${r.warn}</div>`;
   $('orders').innerHTML=h;
   $('oCount').textContent=ord.length>1?`${ord.length}건, 하나씩 따로 넣기`:'';
 }
 
-let limitManual=null;   // 사용자가 지정가 체결 여부를 직접 바꾼 경우
-function renderSettle(){
-  $('cStar').classList.toggle('hidden',!(S.mode==='reverse'&&S.revDay>0&&!(S.closes.length>=5)));
-  if(!$('cDate').value) $('cDate').value=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
-  settlePreview();
-}
-function currentLimitSold(close,ord){
-  const lo=ord.find(o=>o.type==='지정가');
-  if(!lo) return false;
-  return limitManual!=null? limitManual : close>=lo.price;
-}
-function settlePreview(){
-  if(S.mode==='reverse'&&S.revDay>0&&S.closes.length<5) S.revStarManual=readMoney('cStarIn');
-  const close=readMoney('cClose');
-  const p=plan(S), ord=visibleOrders(S,p);
-  if(!close){$('cFills').innerHTML='';$('cApply').disabled=true;return;}
-  const limitSold=currentLimitSold(close,ord);
-  let h='';
-  ord.forEach((o,i)=>{
-    const f=isFilled(o,close,limitSold);
-    h+=`<div class="fill"><div class="l"><b>${i+1}. ${o.side==='buy'?'매수':'매도'} ${o.qty}주</b><small>${o.type} ${o.price==null?'종가':money(o.price)}</small>
-      ${o.type==='지정가'?`<label class="switch"><input type="checkbox" id="limitChk" ${limitSold?'checked':''}> 장중에 이 가격에 닿아서 팔렸어요</label>`:''}
-      </div><span class="badge ${f?'y':'n'}">${f?'체결':'미체결'}</span></div>`;
-  });
-  if(!ord.length) h='<div class="fill"><div class="l">걸어 둔 주문이 없어요. 종가만 기록돼요.</div></div>';
-  $('cFills').innerHTML=h;
-  const lc=$('limitChk'); if(lc) lc.onchange=()=>{limitManual=lc.checked;settlePreview();};
-  $('cApply').disabled=(S.mode==='reverse'&&p.needStar);
-}
-
-function renderHist(){
-  const H=S.history||[];
-  if(!H.length){$('hist').innerHTML='<li>아직 기록이 없어요. 종가를 처음 입력하면 여기에 쌓여요.</li>';return;}
-  $('hist').innerHTML=H.map((x,i)=>{
-    const e=x.ev, b=e.buys.reduce((a,c)=>a+c.q,0), sl=e.sells.reduce((a,c)=>a+c.q,0), pl=e.sells.reduce((a,c)=>a+c.pl,0);
-    let t=`종가 <b class="num">${money(e.close)}</b>. ${b?b+'주 매수':'매수 없음'}, ${sl?`${sl}주 매도 (손익 ${pl>=0?'+':''}${money(pl)})`:'매도 없음'}. 회차 ${tStr(e.T0)} → ${tStr(e.T1)}`;
-    if(e.note) t+=`<br><b>${e.note}</b>`;
-    return `<li><span class="d">${e.date||''}</span><br>${t}${i===0?`<br><button class="linkbtn" id="undo">이 입력 취소하기</button>`:''}</li>`;
-  }).join('');
-  const u=$('undo'); if(u) u.onclick=()=>{
-    if(!confirm('가장 최근 입력을 취소하고 그 전 상태로 되돌릴까요?')) return;
-    const top=S.history[0];
-    S=Object.assign(fresh(),top.prev,{history:S.history.slice(1)}); save(); renderAll(); toast('취소했어요.');
-  };
-}
-
-function renderSync(){
-  const el=$('storeInfo'); if(!el) return;
-  el.innerHTML = CLOUD_ON
-    ? (cloudFailed?'<b>인터넷 저장 실패.</b> 이 기기에는 저장돼 있고, 다음 입력 때 다시 시도해요.':'<b>인터넷에 자동 저장 중이에요.</b> 다른 폰이나 PC에서도 같은 코드를 넣으면 이어서 쓸 수 있어요.')
-    : '<b>이 기기에 자동 저장 중이에요.</b> 같은 기기에서는 코드마다 따로 저장돼요. 다른 기기에서 이어 쓰려면 인터넷 저장을 연결해야 해요.';
-}
-function renderSettings(){
-  renderSync();
-  $('fx').value=U.fx;
-  $('fxInfo').textContent=U.fxAt?`${U.fxAt}에 자동으로 불러온 값이에요. 증권사 환율과 다르면 직접 고쳐도 돼요.`:'직접 입력한 값이에요.';
-  $('optLadder').checked=!!S.ladder; $('optCompound').checked=S.compound!==false;
-  $('eQty').value=S.qty; setMoney('eAvg',S.qty>0?S.avg:null); setMoney('eCash',S.cash); $('eT').value=tStr(S.T);
-}
-
 function renderGuide(){
   const dst=usDST(), open=dst?'밤 10시 30분':'밤 11시 30분', end=dst?'새벽 5시':'새벽 6시', pre=dst?'오후 5시':'오후 6시';
-  const base=BASE[S.ticker];
+  const base=BASE[F.ticker];
   $('guide').innerHTML=`
-  <h3>매일 할 일은 두 가지예요</h3>
+  <h3>매일 할 일</h3>
   <ol>
-    <li><b>밤:</b> 위 주문표를 번호 순서대로 증권사 앱에 하나씩 넣어요.</li>
-    <li><b>다음날 아침:</b> 앱에서 종가를 보고 &lsquo;종가 입력&rsquo;에 넣은 뒤 &lsquo;결과 반영하기&rsquo;를 눌러요. 그날 밤 주문표가 새로 나와요.</li>
+    <li>증권사 앱 잔고에서 <b>보유 수량과 평단가</b>를 보고 위에 고쳐 넣어요.</li>
+    <li>아래 주문표를 번호 순서대로 증권사 앱에 하나씩 넣어요.</li>
   </ol>
   <h3>증권사 앱에 넣는 법</h3>
   <ol>
-    <li>해외주식 주문 화면에서 ${S.ticker}를 검색하고 매수 또는 매도 탭을 고르세요.</li>
+    <li>해외주식 주문 화면에서 ${F.ticker}를 검색하고 매수 또는 매도 탭을 고르세요.</li>
     <li>주문유형을 주문표에 적힌 대로 바꿔요. LOC는 &lsquo;LOC(장마감지정가)&rsquo;, 지정가 매도는 &lsquo;지정가&rsquo;예요.</li>
     <li>&lsquo;시장가&rsquo; 체크가 켜져 있으면 끄세요. 그래야 단가를 직접 넣을 수 있어요.</li>
-    <li>단가는 달러로 넣어요. 원화로 보고 있다면 가격 아래 작게 적힌 달러 값을 그대로 넣으면 돼요.</li>
-    <li>수량을 넣고 주문을 보내요. 한 번에 한 건씩이라 주문표 개수만큼 반복해요.</li>
+    <li>단가와 수량을 주문표 그대로 넣고 보내요. 한 번에 한 건씩이라 주문표 개수만큼 반복해요.</li>
   </ol>
   <h3>언제 넣나요?</h3>
   <ul>
     <li>미국 본장은 지금 한국시간 <b>${open}부터 다음날 ${end}</b>까지예요.</li>
     <li>LOC·MOC 주문은 낮에 미리 예약으로 넣어도 돼요.</li>
-    <li>지정가 매도는 <b>${pre}(프리장 시작) 이후</b>에 넣어요. 낮에 보이는 &lsquo;데이마켓(주간거래)&rsquo;은 쓰지 않는 게 규칙이에요. 주문유형 목록에 데이마켓만 보인다면 아직 시간이 안 된 거예요.</li>
+    <li>지정가 매도는 <b>${pre}(프리장 시작) 이후</b>에 넣어요. 낮에 보이는 &lsquo;데이마켓(주간거래)&rsquo;은 쓰지 않아요.</li>
   </ul>
   <h3>LOC 주문이 뭐예요?</h3>
   <p>&lsquo;장이 끝날 때 가격(종가)이 내가 정한 가격 이하면 산다&rsquo;는 예약 주문이에요.</p>
-  <div class="q">예) 166,000원에 LOC 매수를 걸었는데 종가가 170,000원이면 <b>안 사져요.</b> 종가가 150,000원이면 <b>150,000원에</b> 사져요. 정한 가격보다 비싸게 사는 일은 없어요.</div>
+  <div class="q">예) $123에 LOC 매수를 걸었는데 종가가 $126이면 <b>안 사져요.</b> 종가가 $110이면 <b>$110에</b> 사져요. 정한 가격보다 비싸게 사는 일은 없어요.</div>
   <p>매도 LOC는 반대로 &lsquo;종가가 정한 가격 이상이면 판다&rsquo;예요. 체결 안 된 주문은 다음날 자동으로 사라지니 매일 다시 넣어요.</p>
   <h3>회차는 뭐예요?</h3>
-  <p>전체 금액을 ${S.splits}번 나눠 쓸 때 지금 몇 번째쯤 와 있는지예요. 한 번 분량을 다 사면 +1, 절반만 사지면 +0.5, 일부를 팔면 줄어들어요. 절반(${S.splits/2}회)을 넘으면 후반전이 되어 평단보다 쌀 때만 사요.</p>
+  <p>시드를 ${F.splits}번 나눠 쓸 때 지금 몇 번째쯤 와 있는지예요. 산 금액 ÷ (시드 ÷ ${F.splits})로 계산해요. 절반(${F.splits/2}회)을 넘으면 후반전이 되어 평단보다 쌀 때만 사요.</p>
   <h3>언제 팔리나요?</h3>
-  <p>평단보다 ${base}% 오르면 대부분(3/4)이 팔리고, 나머지 1/4은 그보다 먼저 조금씩 팔려요. 전부 팔리면 한 사이클이 끝나고 처음부터 다시 시작해요.</p>
-  <h3>돈을 다 쓰면요?</h3>
-  <p>회차가 ${S.splits-1}을 넘으면 &lsquo;리버스 구간&rsquo;이 돼요. 매일 보유 수량을 조금씩 팔고, 남은 현금의 1/4씩 다시 사면서 버티는 규칙이에요. 이 계산기가 알아서 주문을 바꿔 줘요.</p>`;
+  <p>평단보다 ${base}% 오르면 대부분(3/4)이 팔리고, 1/4은 그보다 먼저 조금씩 팔려요. 전부 팔리면 보유 수량을 0으로 바꾸고 처음부터 다시 시작해요.</p>`;
 }
-
-/* ---------- 처음 설정 ---------- */
-const setupSel={ticker:'SOXL',splits:40,have:'no'};
-function segBind(id,key,cb){
-  $(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
-    setupSel[key]=key==='splits'?+b.dataset.v:b.dataset.v; if(cb)cb(); setupPreview();
-  });
-}
-segBind('sTicker','ticker'); segBind('sSplits','splits');
-segBind('sHave','have',()=>$('sHaveBox').classList.toggle('hidden',setupSel.have!=='yes'));
-['sPrincipal','sQty','sAvg','sClose'].forEach(id=>$(id).addEventListener('input',setupPreview));
-
-function setupValues(){
-  const have=setupSel.have==='yes';
-  return {principal:readMoney('sPrincipal'),close:readMoney('sClose'),have,
-    qty:have?Math.max(0,Math.round(parseFloat($('sQty').value)||0)):0, avg:have?readMoney('sAvg'):null};
-}
-function setupPreview(){
-  const v=setupValues(); let ok=!!(v.principal&&v.close); let t;
-  if(v.principal){
-    const per=v.principal/setupSel.splits;
-    t=`1회 매수금은 약 <b class="num">${money(per)}</b>이에요.`;
-    if(v.close&&per<v.close*0.5) t+=`<br>이 금액으로는 1주도 못 사요. 금액을 늘리거나 20번 나누기를 골라 주세요.`;
-    if(v.have){
-      if(v.qty>0&&v.avg){
-        const inv=v.qty*v.avg;
-        t+=`<br>이미 산 금액 <b class="num">${money(inv)}</b> 기준으로 <b>${tStr(inv/per)}회째</b>부터 이어서 시작해요.`;
-        if(inv>v.principal){t+=`<br>산 금액이 전체 금액보다 커요. 전체 금액을 다시 확인해 주세요.`;ok=false;}
-      }else ok=false;
-    }
-  }else t='전체 금액과 최근 종가를 넣으면 시작할 수 있어요.';
-  $('sPreview').innerHTML=t; $('sStart').disabled=!ok;
-}
-$('sStart').onclick=()=>{
-  const v=setupValues(); if(!v.principal||!v.close) return;
-  const n=fresh(); n.setup=true; n.ticker=setupSel.ticker; n.splits=setupSel.splits;
-  n.principal=v.principal; n.startPrincipal=v.principal; n.cash=v.principal; n.lastClose=v.close;
-  if(v.have&&v.qty>0&&v.avg){
-    const inv=v.qty*v.avg; n.qty=v.qty; n.avg=v.avg; n.cash=Math.max(0,v.principal-inv);
-    n.T=inv/(v.principal/n.splits);
-    if(n.T>n.splits-1){n.mode='reverse';n.revDay=0;}
-  }
-  S=n; save(); renderAll(); window.scrollTo(0,0); toast('설정 끝! 오늘 밤 넣을 주문이 나왔어요.');
-};
 
 /* ---------- 이벤트 ---------- */
-function switchCur(c){
-  if(U.cur===c) return;
-  const vals={}; document.querySelectorAll('input.money').forEach(i=>{const v=parseFloat(i.value);vals[i.id]=isFinite(v)?toUSD(v):null;});
-  U.cur=c; saveU();
-  document.querySelectorAll('input.money').forEach(i=>{if(vals[i.id]!=null)i.value=fromUSD(vals[i.id]);});
-  renderAll();
+function bindSeg(id,key,num){
+  $(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{F[key]=num?+b.dataset.v:b.dataset.v;save();renderAll();});
 }
-$('curKRW').onclick=()=>switchCur('KRW');
-$('curUSD').onclick=()=>switchCur('USD');
+bindSeg('fTicker','ticker'); bindSeg('fSplits','splits',true);
+[['fSeed','seed'],['fQty','qty'],['fAvg','avg'],['fPrice','price']].forEach(([id,k])=>
+  $(id).addEventListener('input',()=>{F[k]=$(id).value;save();renderAll();}));
 
-['cClose','cStarIn'].forEach(id=>$(id).addEventListener('input',()=>{limitManual=null;settlePreview();}));
-$('cApply').onclick=()=>{
-  const close=readMoney('cClose'); if(!close) return;
-  const ord=visibleOrders(S,plan(S));
-  S=settle(S,close,currentLimitSold(close,ord),$('cDate').value||'');
-  save(); limitManual=null; $('cClose').value=''; $('cStarIn').value='';
-  const d=new Date($('cDate').value); if(!isNaN(d)){d.setDate(d.getDate()+1);$('cDate').value=d.toISOString().slice(0,10);}
-  renderAll(); window.scrollTo({top:0,behavior:'smooth'});
-  toast(S.history[0].ev.note||'반영했어요. 오늘 밤 주문이 새로 나왔어요.');
-};
-
-$('fx').addEventListener('change',()=>{const v=parseFloat($('fx').value);if(v>100){U.fx=v;U.fxAt=null;saveU();renderAll();}});
-$('fxRefresh').onclick=()=>loadFx(true);
-$('optLadder').onchange=e=>{S.ladder=e.target.checked;save();renderAll();};
-$('optCompound').onchange=e=>{S.compound=e.target.checked;save();};
-$('eSave').onclick=()=>{
-  const q=Math.max(0,Math.round(parseFloat($('eQty').value)||0));
-  const a=readMoney('eAvg'), c=parseFloat($('eCash').value), t=parseFloat($('eT').value);
-  S.qty=q; S.avg=q>0?(a||S.avg):0;
-  if(isFinite(c)&&c>=0) S.cash=toUSD(c);
-  if(isFinite(t)&&t>=0) S.T=t;
-  if(S.qty===0){S.T=0;S.mode='normal';S.revDay=0;}
-  else if(S.T>S.splits-1){ if(S.mode!=='reverse'){S.mode='reverse';S.revDay=0;} }
-  else {S.mode='normal';S.revDay=0;}
-  save(); renderAll(); toast('저장했어요.');
-};
-$('reset').onclick=()=>{
-  if(!confirm('모든 기록을 지우고 처음부터 설정할까요? 되돌릴 수 없어요.')) return;
-  S=fresh(); save(); renderAll(); window.scrollTo(0,0);
-};
-$('who').onclick=()=>{
-  if(!confirm('다른 코드로 바꿀까요? 지금 기록은 그대로 저장돼 있어요.')) return;
-  try{localStorage.removeItem('mb4-last');}catch(e){}
-  PID=null;CODE=null;S=fresh();$('lCode').value='';renderAll();window.scrollTo(0,0);
-};
-
-let tt; function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2800);}
-
-async function loadFx(manual){
-  try{
-    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),4000);
-    const r=await fetch('https://open.er-api.com/v6/latest/USD',{signal:ctrl.signal}); clearTimeout(to);
-    const d=await r.json(); const k=d&&d.rates&&d.rates.KRW;
-    if(k){U.fx=Math.round(k*100)/100;U.fxAt=new Date().toLocaleDateString('ko-KR');saveU();renderAll();if(manual)toast('환율을 새로 불러왔어요.');}
-  }catch(e){if(manual)toast('환율을 불러오지 못했어요. 직접 입력해 주세요.');}
-}
-
-function loginPreview(){
-  const c=$('lCode').value.trim();
-  $('lOpen').disabled=c.length<4;
-  $('lMode').innerHTML = CLOUD_ON
-    ? '같은 코드를 넣으면 <b>어느 폰이나 PC에서든</b> 내 기록이 열려요.'
-    : '기록은 <b>이 기기</b>에 코드별로 따로 저장돼요.';
-}
-$('lCode').addEventListener('input',loginPreview);
+$('lCode').addEventListener('input',renderAll);
 $('lCode').addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('lOpen').disabled)$('lOpen').click();});
 $('lOpen').onclick=()=>openCode($('lCode').value);
+$('who').onclick=()=>{
+  if(!confirm('다른 코드로 바꿀까요? 지금 입력값은 그대로 저장돼 있어요.')) return;
+  try{localStorage.removeItem('mb4-last');}catch(e){}
+  PID=null;CODE=null;$('lCode').value='';renderAll();window.scrollTo(0,0);
+};
 
 async function openCode(code,silent){
   code=code.trim(); if(code.length<4) return;
-  $('lOpen').disabled=true; $('lOpen').textContent='여는 중...';
+  $('lOpen').disabled=true;
   const pid=await pidOf(code);
-  let local=null, localU=null, remote=null;
-  try{const r=localStorage.getItem('mb4-state:'+pid); if(r) local=JSON.parse(r);}catch(e){}
-  try{const r=localStorage.getItem('mb4-ui:'+pid); if(r) localU=JSON.parse(r);}catch(e){}
-  if(!LS&&CS){try{const r=await window.storage.get('mb4-state:'+pid,false); if(r) local=JSON.parse(r.value);}catch(e){}}
-  if(CLOUD_ON){
-    try{const d=await cloudCall('mb_get',{p_id:pid}); if(d&&d.data) remote=d.data;}
-    catch(e){if(!silent)toast('인터넷 저장소에 연결하지 못해 이 기기 기록으로 열었어요.');}
+  let local=null, remote=null;
+  try{const r=localStorage.getItem('mb5:'+pid); if(r) local=JSON.parse(r);}catch(e){}
+  if(!local){   // 이전 버전 기록이 있으면 이어받기
+    try{const r=localStorage.getItem('mb4-state:'+pid); if(r){const o=JSON.parse(r);
+      local={ticker:o.ticker||'SOXL',splits:o.splits||40,seed:o.startPrincipal||o.principal||'',qty:o.qty||'',avg:o.avg?cents(o.avg):'',price:o.lastClose?cents(o.lastClose):'',updatedAt:0};}}catch(e){}
   }
-  let st=local, ui=localU;
-  if(remote&&remote.state&&(!local||(remote.state.updatedAt||0)>(local.updatedAt||0))){st=remote.state;ui=remote.ui||ui;}
+  if(CLOUD_ON){try{const d=await cloudCall('mb_get',{p_id:pid}); if(d&&d.data&&d.data.form) remote=d.data.form;}catch(e){}}
+  const pick=(remote&&(!local||(remote.updatedAt||0)>(local.updatedAt||0)))?remote:local;
   PID=pid; CODE=code;
+  F=Object.assign({ticker:'SOXL',splits:40,seed:'',qty:'',avg:'',price:'',updatedAt:0},pick||{});
   try{localStorage.setItem('mb4-last',code);}catch(e){}
-  if(!st){
-    let legacy=null; try{const r=localStorage.getItem('mb4-state'); if(r) legacy=JSON.parse(r);}catch(e){}
-    if(legacy&&legacy.setup&&confirm('이 기기에 코드 없이 쓰던 기존 기록이 있어요. 이 코드로 옮길까요?')){
-      st=legacy; try{const u=localStorage.getItem('mb4-ui'); if(u) ui=JSON.parse(u);}catch(e){}
-      try{localStorage.removeItem('mb4-state');localStorage.removeItem('mb4-ui');}catch(e){}
-    }
-  }
-  S=Object.assign(fresh(),st||{});
-  if(S.setup&&!S.startPrincipal) S.startPrincipal=S.principal;
-  if(ui) U=Object.assign({cur:'KRW',fx:U.fx,fxAt:U.fxAt},ui);
-  save(); saveU();
-  $('lOpen').textContent='열기';
-  renderAll(); window.scrollTo(0,0);
-  if(!silent) toast(st?'내 기록을 불러왔어요.':'새 코드예요. 처음 설정을 해 주세요.');
-  loadFx(false);
+  save(); renderAll(); window.scrollTo(0,0);
+  if(!silent) toast(pick?'내 입력값을 불러왔어요.':'새 코드예요. 내 상황을 입력해 주세요.');
 }
 
-(async function init(){
+let tt; function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600);}
+
+(function init(){
   let last=null; try{last=localStorage.getItem('mb4-last');}catch(e){}
   renderAll();
   if(last) openCode(last,true);
