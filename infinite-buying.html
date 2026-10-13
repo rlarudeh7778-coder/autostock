@@ -107,6 +107,20 @@ h2{font-size:17px;font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
 .twhen{font-size:12.5px;margin-top:6px;color:var(--warn);font-weight:600;line-height:1.5}
 .ticket.opt{border-style:dashed}
 .ticket.skip{opacity:.55;border-style:dashed}
+.risk{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--soft);color:var(--ink2);font-size:12.5px;line-height:1.55}
+.risk b{color:var(--ink);font-weight:800}
+.rule{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--sell-bg);color:var(--sell);font-size:12.5px;line-height:1.55;font-weight:600}
+.addbadge{font-size:12px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--ink2)}
+details.adv{margin-top:18px;border-top:1px solid var(--line);padding-top:4px}
+details.adv summary{cursor:pointer;font-size:14px;font-weight:800;padding:12px 0 4px;color:var(--ink2);list-style:none}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::after{content:" ▾"}
+details.adv[open] summary::after{content:" ▴"}
+.ind{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-top:10px}
+.ind div{background:var(--sheet);padding:9px 10px}
+.ind dt{font-size:11.5px;color:var(--ink2);margin:0}
+.ind dd{margin:2px 0 0;font-size:14.5px;font-weight:800}
+.ind small{display:block;font-size:11px;font-weight:600;color:var(--ink3)}
 .ticket.skip .tprice{text-decoration:line-through;text-decoration-thickness:2px}
 .fix{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--warn-bg);color:var(--warn);font-size:12.5px;line-height:1.55;font-weight:600}
 .fix b{font-weight:800}
@@ -218,18 +232,47 @@ input[type=number]{-moz-appearance:textfield}
       <div class="field">
         <label for="fPrice">현재가</label>
         <div class="inp"><input id="fPrice" type="number" inputmode="decimal" placeholder="0"><span class="unit">달러</span></div>
-        <div class="help">매일 주문 넣기 전에 앱에 뜬 현재가로 고쳐 주세요. 주문 거부를 막는 데 쓰여요.</div>
+        <div class="help">첫 매수 가격과 증권사 거부 확인에 쓰여요. 주문 넣기 전에 앱의 현재가로 고쳐 주세요.</div>
       </div>
-      <div class="field">
-        <span class="flabel">내 증권사 주문 허용 폭</span>
-        <div class="seg" id="fBand">
-          <button data-v="10">현재가 ±10%</button>
-          <button data-v="20">현재가 ±20%</button>
-        </div>
-        <div class="help">현재가에서 너무 먼 가격은 증권사가 주문을 거부해요. 잘 모르면 ±10%로 두세요. ±20%로 했는데 거부가 나면 ±10%로 바꾸세요.</div>
-      </div>
-    </div>
 
+      <div id="revBox" class="hidden">
+        <div class="field">
+          <span class="flabel">리버스 며칠째인가요?</span>
+          <div class="seg" id="fRevDay">
+            <button data-v="1">첫날</button>
+            <button data-v="2">둘째 날 이후</button>
+          </div>
+        </div>
+        <div class="field" id="avg5Box">
+          <label for="fAvg5">최근 5거래일 종가 평균</label>
+          <div class="inp"><input id="fAvg5" type="number" inputmode="decimal" placeholder="0"><span class="unit">달러</span></div>
+          <div class="help">증권사 앱 일별 시세에서 최근 5일 종가를 더해 5로 나눈 값이에요. 리버스 구간의 별지점이에요.</div>
+        </div>
+      </div>
+
+      <details class="adv" id="advBox">
+        <summary>더 정확하게 (선택 입력)</summary>
+        <div class="row2" style="margin-top:12px">
+          <div class="field">
+            <label for="fT">진행 회차 T</label>
+            <div class="inp"><input id="fT" type="number" inputmode="decimal" step="0.01" placeholder="자동"><span class="unit">회</span></div>
+          </div>
+          <div class="field">
+            <label for="fCash">남은 현금(잔금)</label>
+            <div class="inp"><input id="fCash" type="number" inputmode="decimal" placeholder="자동"><span class="unit">달러</span></div>
+          </div>
+        </div>
+        <div class="help">비워 두면 자동 계산(T = 산 금액 ÷ (시드÷분할), 잔금 = 시드 − 산 금액)이에요. 쿼터매도가 체결된 적이 있으면 실제 T와 잔금이 달라지니, 아래 규칙대로 고친 값을 넣으세요.<br>· 1회분 다 사지면 T+1, 절반만 사지면 T+0.5<br>· 쿼터매도(1/4) 팔리면 T×0.75<br>· 잔금은 증권사 앱의 달러 예수금 중 이 방법에 쓰는 돈</div>
+        <div class="field">
+          <span class="flabel">증권사 거부 확인 기준</span>
+          <div class="seg" id="fBand">
+            <button data-v="10">현재가 ±10%</button>
+            <button data-v="20">현재가 ±20%</button>
+          </div>
+          <div class="help">신한 등은 ±10%, LS 등은 ±20% 밖 가격을 거부할 수 있어요. 주문 가격은 규칙대로 두고, 거부될 수 있는 주문만 표시해 드려요.</div>
+        </div>
+      </details>
+    </div>
 
     <div class="sheet" id="status"></div>
 
@@ -262,7 +305,8 @@ const tStr=t=>(Math.round(t*100)/100).toString();
 const BASE={SOXL:20,TQQQ:15};   // V4.0: 별% 시작값이자 익절 % (SOXL +20%, TQQQ +15%)
 
 let CODE=null, PID=null;
-let F={ticker:'SOXL',splits:40,seed:'',qty:'',avg:'',price:'',band:10,updatedAt:0};
+const F0={ticker:'SOXL',splits:40,seed:'',qty:'',avg:'',price:'',band:10,T:'',cash:'',revDay:1,avg5:'',updatedAt:0};
+let F=Object.assign({},F0);
 
 /* ---------- 저장 ---------- */
 let LS=false; try{localStorage.setItem('__t','1');localStorage.removeItem('__t');LS=true;}catch(e){}
@@ -293,76 +337,104 @@ function save(){
   if(CLOUD_ON){clearTimeout(pushTimer);pushTimer=setTimeout(()=>cloudCall('mb_save',{p_id:PID,p_data:{form:F}}).catch(()=>{}),800);}
 }
 
-/* ---------- V4.0 계산 ---------- */
+/* ---------- V4.0 계산 (2026년 3월 공개 규칙) ----------
+   별% : 40분할 SOXL 20−T / 20분할 SOXL 20−2T / 40분할 TQQQ 15−0.75T / 20분할 TQQQ 15−1.5T
+   별지점 = 평단×(1+별%)   매수점 = 별지점−0.01   매도점 = 별지점
+   1회매수금 = 잔금 ÷ (분할수 − T)
+   전반전: 절반 별지점 LOC + 절반 평단 LOC / 후반전: 전액 별지점 LOC / 아래로 큰수 LOC 추가
+   매도: 1/4 별지점 LOC(쿼터매도) + 3/4 지정가(SOXL +20%, TQQQ +15%)
+   리버스: T > 분할수−1 */
+function num(v){const n=parseFloat(v);return isFinite(n)?n:null;}
 function calc(){
   const seed=+F.seed||0, qty=Math.max(0,Math.round(+F.qty||0)), avg=+F.avg||0, price=+F.price||0, splits=F.splits, base=BASE[F.ticker];
-  const per=seed/splits;                                  // 1회 매수금
-  const cost=qty>0&&avg>0? qty*avg : 0;                   // 산 금액
-  const T=per>0? cost/per : 0;                            // 진행 회차
-  const cash=Math.max(0,seed-cost);                       // 남은 현금
+  const per=seed/splits;
+  const cost=qty>0&&avg>0? qty*avg : 0;
+  const tM=num(F.T), cM=num(F.cash);
+  const T= tM!=null&&tM>=0 ? tM : (per>0? cost/per : 0);
+  const cash= cM!=null&&cM>=0 ? cM : Math.max(0,seed-cost);
   const left=splits-T;
-  const budget=left>0? cash/left : 0;                     // V4.0: 남은 현금 ÷ 남은 회차
-  const r={seed,qty,avg,price,splits,base,per,cost,T,cash,budget,orders:[],mode:'normal',warn:null};
+  const budget=left>0? cash/left : 0;
+  const r={seed,qty,avg,price,splits,base,per,cost,T,cash,budget,orders:[],mode:'normal',warn:null,tAuto:tM==null,cAuto:cM==null};
   if(!seed){r.empty='총 시드를 넣어 주세요.';return r;}
   if(qty>0&&!avg){r.empty='평단가를 넣어 주세요.';return r;}
+
   if(qty<=0){
-    if(!price){r.empty='처음 살 때는 현재가가 필요해요.';return r;}
+    if(!price){r.empty='처음 살 때는 현재가(전일 종가)가 필요해요.';return r;}
     const pr=cents(price*1.12), q=rq(budget/pr);
-    r.orders.push({side:'buy',type:'LOC',price:pr,qty:q,why:'첫 매수예요. 현재가보다 12% 높게 걸면 거의 무조건 체결되고, 실제로는 그날 종가에 사져요.'});
+    r.orders.push({side:'buy',type:'LOC',price:pr,qty:q,why:'첫 매수(큰수매수). 전일 종가보다 12% 높게 걸어 거의 무조건 체결되고, 실제로는 그날 종가에 사져요.'});
+    ladder(r,budget,q,pr);
     if(q<1) r.warn='1회 매수금으로 1주도 살 수 없어요. 시드를 늘리거나 20분할로 바꿔 주세요.';
-    return r;
+    applyBand(r); return r;
   }
+
   if(T>splits-1){
     r.mode='reverse';
     const n=Math.floor(qty/(splits/2));
-    r.orders.push({side:'sell',type:'MOC',price:null,qty:n,why:`시드를 거의 다 썼어요(리버스 구간). 첫날은 보유 수량의 1/${splits/2}을 종가에 무조건 팔아요.`});
-    return r;
+    r.retLine=avg*(1-base/100);
+    if(n<1) r.warn=`보유 수량이 ${splits/2}주보다 적어 리버스 매도 수량(1/${splits/2}, 내림)이 0주예요. 매도 없이 매수 규칙만 진행해요.`;
+    if(+F.revDay!==2){
+      r.orders.push({side:'sell',type:'MOC',price:null,qty:n,why:`리버스 첫날. 보유 수량의 1/${splits/2}을 종가에 무조건 팔아요(손절). 첫날은 사지 않아요. 팔린 뒤 T는 ×${splits===40?'0.95':'0.9'}.`});
+    }else{
+      const a5=num(F.avg5);
+      if(!a5){r.needAvg5=true;}
+      else{
+        r.star=a5;
+        r.orders.push({side:'sell',type:'LOC',price:cents(a5),qty:n,why:`종가가 최근 5일 평균 이상이면 보유 수량의 1/${splits/2}을 팔아요(손절).`});
+        const bp=cents(a5-0.01);
+        r.orders.push({side:'buy',type:'LOC',price:bp,qty:rq(cash/4/bp),why:'잔금의 1/4로, 종가가 최근 5일 평균보다 낮으면 사져요. 사지면 T = T + (분할수 − T)×0.25.'});
+      }
+    }
+    applyBand(r); return r;
   }
-  const sp=base*(1-2*T/splits), star=avg*(1+sp/100);     // 별지점 (40분할 SOXL: 20−T %)
+
+  const sp=base*(1-2*T/splits), star=avg*(1+sp/100);
   const spTxt=(sp>=0?'+':'')+(Math.round(sp*100)/100)+'%';
-  r.star=star; r.sp=sp;
+  r.star=star; r.sp=sp; r.limitPx=cents(avg*(1+base/100));
+  const bp=cents(star-0.01);
   if(T<splits/2){
-    const pa=cents(star-0.01), pb=cents(avg);
-    r.orders.push({side:'buy',type:'LOC',price:pa,qty:rq(budget/2/pa),why:`1회 매수금의 절반. 종가가 평단 ${spTxt} 가격보다 낮으면 사져요.`});
-    r.orders.push({side:'buy',type:'LOC',price:pb,qty:rq(budget/2/pb),why:'1회 매수금의 나머지 절반. 종가가 평단가 이하면 사져요.'});
+    const pb=cents(avg);
+    r.orders.push({side:'buy',type:'LOC',price:bp,qty:rq(budget/2/bp),why:`1회 매수금의 절반. 별지점(평단 ${spTxt})보다 종가가 낮으면 사져요. 사지면 T+0.5.`});
+    r.orders.push({side:'buy',type:'LOC',price:pb,qty:rq(budget/2/pb),why:'1회 매수금의 나머지 절반. 종가가 평단 이하면 사져요. 사지면 T+0.5.'});
+    ladder(r,budget,r.orders[0].qty+r.orders[1].qty,Math.min(bp,pb));
   }else{
-    const pa=cents(star-0.01);
-    r.orders.push({side:'buy',type:'LOC',price:pa,qty:rq(budget/pa),why:`후반전이라 1회 매수금 전부를 평단 ${spTxt} 가격(평단보다 낮음)에 걸어요.`});
+    r.orders.push({side:'buy',type:'LOC',price:bp,qty:rq(budget/bp),why:`후반전. 1회 매수금 전부를 별지점(평단 ${spTxt})에 걸어요. 평단보다 쌀 때만 사져요. 사지면 T+1.`});
+    ladder(r,budget,r.orders[0].qty,bp);
   }
-  if(!r.orders.some(o=>o.qty>0)) r.warn='1회 매수금으로 1주도 살 수 없어요. 시드를 늘리거나 20분할로 바꿔 주세요.';
+  if(!r.orders.some(o=>o.qty>0&&!o.add)) r.warn='1회 매수금으로 1주도 살 수 없어요. 시드를 늘리거나 20분할로 바꿔 주세요.';
   const qq=rq(qty/4), rest=qty-qq;
-  if(qq>0) r.orders.push({side:'sell',type:'LOC',price:cents(star),qty:qq,why:`보유 수량의 1/4. 종가가 평단 ${spTxt} 가격 이상이면 팔려요.`});
-  if(rest>0) r.orders.push({side:'sell',type:'지정가',price:cents(avg*(1+base/100)),qty:rest,why:`나머지 전부. 평단 +${base}%에 닿으면 팔려요 (수익 실현).`});
+  if(qq>0) r.orders.push({side:'sell',type:'LOC',price:cents(star),qty:qq,quarter:true,
+    why:`쿼터매도. 보유 수량의 1/4을 별지점(평단 ${spTxt}) 이상이면 팔아요. 팔리면 T×0.75.`,
+    rule: sp<0?`후반전이라 별지점이 평단보다 낮아서, 이 1/4은 <b>손해를 보고 팔릴 수 있어요. 규칙이 맞아요.</b> 팔린 돈으로 다시 사서 평단을 낮추고, T가 줄어 다음 기준이 다시 올라가게 하는 장치예요. 이익 실현은 지정가 매도(평단 +${base}%)가 담당해요.`:null});
+  if(rest>0) r.orders.push({side:'sell',type:'지정가',price:r.limitPx,qty:rest,why:`나머지 전부. 평단 +${base}%에 닿으면 팔려요 (이익 실현, 사이클 끝).`});
   applyBand(r);
-  // 같은 가격으로 조정된 매수 LOC는 한 건으로 합치기
-  const bs=r.orders.filter(o=>o.side==='buy'&&!o.skip&&o.orig);
-  if(bs.length===2&&bs[0].price===bs[1].price){
-    bs[0].qty+=bs[1].qty;
-    bs[0].why='1회 매수금 전부. 두 매수 주문이 같은 가격이 되어 한 번에 넣어요.';
-    bs[0].fix=`원래 가격 ${usd(bs[0].orig)}, ${usd(bs[1].orig)}이 둘 다 현재가보다 높아 증권사가 거부해요. LOC 매수는 종가가 걸어 둔 가격보다 낮으면 <b>종가에</b> 사지는 거라, 접수 가능한 <b>${usd(bs[0].price)}</b>로 한 번에 넣어도 결과는 같아요.`;
-    r.orders.splice(r.orders.indexOf(bs[1]),1);
-  }
   return r;
 }
 
-/* 증권사 주문 허용 폭 처리 (세컨플랜) */
+/* 큰수매수: 큰 하락 대비 아래로 1주씩 LOC 추가 (V4.0 규칙의 '아래로 LOC 매수 추가') */
+function ladder(r,budget,baseQty,below){
+  const floor=below*0.75;   // 너무 먼 가격(−25% 밖)은 체결 가능성이 낮고 거부되기 쉬워 제외
+  for(let k=baseQty+1,c=0;c<3&&k<baseQty+80;k++){
+    const pr=cents(budget/k-0.01);
+    if(pr<floor) break;
+    if(pr>0&&pr<below-0.009){r.orders.push({side:'buy',type:'LOC',price:pr,qty:1,add:true,why:'큰 하락 대비 추가 주문. 종가가 이 가격 이하로 떨어지면 1주 더 사져요.'});c++;below=pr;}
+  }
+}
+
+/* 증권사 거부 확인: 가격은 규칙 그대로 두고 위험만 표시 */
 function applyBand(r){
   const P=r.price, b=(F.band||10)/100;
-  if(!P){ if(r.orders.length) r.noPrice=true; return; }
+  if(!P){ if(r.orders.some(o=>o.price!=null)) r.noPrice=true; return; }
   const hi=P*(1+b), lo=P*(1-b);
   r.orders.forEach(o=>{
     if(o.price==null) return;
-    const gap=(o.price/P-1)*100, gapTxt=(gap>=0?'+':'')+gap.toFixed(1)+'%';
-    if(o.side==='buy' && o.price>hi){
+    const gap=(o.price/P-1)*100, g=(gap>=0?'+':'')+gap.toFixed(1)+'%';
+    if(o.side==='buy'&&o.price>hi){
       const np=Math.floor((hi-0.01)*100)/100;
-      o.orig=o.price; o.price=np;
-      o.fix=`원래 가격 ${usd(o.orig)}은 현재가보다 ${gapTxt} 높아 증권사가 거부해요. LOC 매수는 종가가 걸어 둔 가격보다 낮으면 <b>종가에</b> 사지는 거라, 접수 가능한 <b>${usd(np)}</b>로 넣어도 결과는 같아요. (오늘 하루에 ${Math.round(b*100)}% 넘게 급등하는 날만 빠져요.)`;
-    }else if(o.side==='buy' && o.price<lo){
-      o.skip=true;
-      o.fix=`현재가보다 ${gapTxt} 낮아 거부될 수 있고, 오늘 그 가격까지 떨어질 가능성도 낮아요. <b>오늘은 넣지 않아도 돼요.</b>`;
-    }else if(o.side==='sell' && o.price>hi){
-      o.skip=true;
-      o.fix=`현재가보다 ${gapTxt} 높아 증권사가 거부해요. 오늘 이 가격까지 오를 일은 거의 없어서 <b>오늘은 넣지 않아도 결과가 같아요.</b> 현재가가 ${usd(o.price/(1+b))} 이상으로 회복되면 다시 넣으세요.`;
+      o.risk=`현재가보다 ${g} 높아 증권사가 거부할 수 있어요. 거부되면 같은 수량을 <b>${usd(np)}</b>로 다시 넣으세요. LOC 매수는 종가가 걸어 둔 가격보다 낮으면 종가에 사지니 결과는 같아요.`;
+    }else if(o.side==='sell'&&o.price>hi){
+      o.risk=`현재가보다 ${g} 높아 증권사가 거부할 수 있어요. 거부되면 오늘은 그냥 넘어가도 돼요. 오늘 그 가격까지 오를 가능성은 낮아 결과는 같아요.`;
+    }else if(o.price<lo){
+      o.risk=`현재가보다 ${g} 낮아 증권사가 거부할 수 있어요. 거부되면 이 주문은 건너뛰세요.`;
     }
   });
 }
@@ -391,13 +463,16 @@ function renderAll(){
   document.querySelectorAll('#fTicker button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===F.ticker));
   document.querySelectorAll('#fSplits button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===F.splits));
   document.querySelectorAll('#fBand button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===(F.band||10)));
-  ['seed','qty','avg','price'].forEach(k=>{const el=$('f'+k[0].toUpperCase()+k.slice(1)); if(document.activeElement!==el) el.value=F[k];});
+  [['fSeed','seed'],['fQty','qty'],['fAvg','avg'],['fPrice','price'],['fT','T'],['fCash','cash'],['fAvg5','avg5']].forEach(([id,k])=>{const el=$(id); if(document.activeElement!==el) el.value=F[k]??'';});
+  document.querySelectorAll('#fRevDay button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===(+F.revDay||1)));
   renderResult();
   renderGuide();
 }
 
 function renderResult(){
   const r=calc();
+  $('revBox').classList.toggle('hidden',r.mode!=='reverse');
+  $('avg5Box').classList.toggle('hidden',+F.revDay!==2);
   if(r.empty){
     $('coach').classList.add('hidden');
     $('status').innerHTML=`<div class="empty" style="border:0;padding:6px 0">${r.empty}</div>`;
@@ -406,6 +481,23 @@ function renderResult(){
   const value=r.qty*(r.price||r.avg), pl=value-r.cost, plPct=r.cost?pl/r.cost*100:0;
   const phase=r.mode==='reverse'?'리버스 구간':(r.qty<=0?'새 사이클 시작':(r.T<r.splits/2?'전반전':'후반전'));
   const pct=Math.min(100,r.T/r.splits*100);
+  let ind='';
+  if(r.mode==='normal'&&r.qty>0){
+    ind=`<dl class="ind">
+      <div><dt>별%</dt><dd class="num">${r.sp>=0?'+':''}${(Math.round(r.sp*100)/100)}%</dd></div>
+      <div><dt>별지점</dt><dd class="num">${usd(r.star)}</dd></div>
+      <div><dt>익절가 (+${r.base}%)</dt><dd class="num">${usd(r.limitPx)}</dd></div>
+      <div><dt>리버스까지</dt><dd class="num">${Math.max(0,r.splits-1-r.T).toFixed(2)}회</dd></div>
+      <div><dt>회차 계산</dt><dd class="num" style="font-size:13px">${r.tAuto?'자동':'직접 입력'}</dd></div>
+      <div><dt>잔금 계산</dt><dd class="num" style="font-size:13px">${r.cAuto?'자동':'직접 입력'}</dd></div>
+    </dl>`;
+  }else if(r.mode==='reverse'){
+    ind=`<dl class="ind">
+      <div><dt>별지점 (5일 평균)</dt><dd class="num">${r.star?usd(r.star):'입력 필요'}</dd></div>
+      <div><dt>복귀선 (평단 −${r.base}%)</dt><dd class="num">${usd(r.retLine)}</dd></div>
+      <div><dt>복귀까지</dt><dd class="num">${r.price?((r.retLine/r.price-1)*100).toFixed(1)+'%':'-'}</dd></div>
+    </dl>`;
+  }
   $('status').innerHTML=`
     <div class="status-top">
       <div class="phase num">${tStr(r.T)}회째 <span class="of">/ ${r.splits}회</span></div>
@@ -419,33 +511,36 @@ function renderResult(){
       <div><dt>산 금액 (보유분 합계)</dt><dd class="num">${usd(r.cost)}</dd></div>
       <div><dt>지금 가치 (현재가 기준)</dt><dd class="num">${r.qty>0&&r.price?usd(value):'-'}${r.qty>0&&r.price?`<small class="${pl>=0?'up':'down'}">${pl>=0?'+':''}${usd(pl)} (${plPct>=0?'+':''}${plPct.toFixed(2)}%)</small>`:''}</dd></div>
       <div class="wide"><dt>총자산 (남은 현금 + 지금 가치)</dt><dd class="num">${usd(r.cash+value)}</dd></div>
-    </dl>`;
+    </dl>${ind}`;
   let h='';
-  if(r.mode==='reverse') h+=`<div class="note" style="margin:0 0 10px"><b>리버스 구간이에요.</b> 시드를 거의 다 써서 조금씩 팔고 조금씩 사면서 버티는 규칙으로 바뀌어요. 둘째 날부터는 최근 5거래일 종가 평균 이상이면 보유 수량의 1/${r.splits/2}을 LOC 매도, 그보다 낮으면 남은 현금의 1/4로 LOC 매수해요. 종가가 평단 −${r.base}% 위로 올라오면 일반 규칙으로 돌아가요.</div>`;
-  const all=r.orders.filter(o=>o.qty>0), ord=all.filter(o=>!o.skip), skipped=all.filter(o=>o.skip);
-  if(r.noPrice) h+='<div class="note" style="margin:0 0 10px">현재가를 넣으면 증권사에서 거부될 주문을 미리 걸러 드려요.</div>';
-  if(!ord.length) h+='<div class="empty">오늘 넣을 주문이 없어요.</div>';
-  const tk=(o,label,cls)=>{
+  if(r.mode==='reverse') h+=`<div class="note" style="margin:0 0 10px"><b>리버스 구간이에요.</b> 시드를 다 써서 조금씩 팔고(손절) 잔금의 1/4씩 다시 사면서 버티는 규칙이에요. 외부 자금은 넣지 않는 게 원칙이에요. 종가가 복귀선(${usd(r.retLine)})보다 높아지면 다음 날부터 일반 규칙으로 돌아가요.</div>`;
+  if(r.needAvg5) h+='<div class="empty">최근 5거래일 종가 평균을 넣어 주세요.</div>';
+  if(r.noPrice) h+='<div class="note" style="margin:0 0 10px">현재가를 넣으면 증권사에서 거부될 수 있는 주문을 미리 알려 드려요.</div>';
+  const main=r.orders.filter(o=>o.qty>0&&!o.add), adds=r.orders.filter(o=>o.qty>0&&o.add);
+  if(!main.length&&!r.needAvg5) h+='<div class="empty">오늘 넣을 주문이 없어요.</div>';
+  const tk=(o,label)=>{
     const typeName=o.type==='LOC'?'LOC (장마감지정가)':o.type==='MOC'?'MOC (장마감시장가)':'지정가';
-    return `<article class="ticket ${o.side} ${cls||''}">
+    return `<article class="ticket ${o.side}">
       <div class="stub"><span class="n num">${label}</span><span class="side">${o.side==='buy'?'매수':'매도'}</span></div>
       <div class="tbody">
-        <div class="ttype">주문유형 <span class="otype">${typeName}</span>${o.skip?'<span class="passbadge">오늘 패스</span>':''}</div>
+        <div class="ttype">주문유형 <span class="otype">${typeName}</span>${o.add?'<span class="addbadge">추가</span>':''}</div>
         <div class="tmain"><div class="tprice num">${o.price==null?'종가 그대로':usd(o.price)}</div><div class="tqty num">${o.qty}<span>주</span></div></div>
         <div class="twhy">${o.why}</div>
-        ${o.fix?`<div class="fix">${o.fix}</div>`:''}
-        ${o.skip?'':`<div class="twhen">${whenText(o.type)}</div>`}
+        ${o.rule?`<div class="rule">${o.rule}</div>`:''}
+        ${o.risk?`<div class="risk">${o.risk}</div>`:''}
+        <div class="twhen">${whenText(o.type)}</div>
       </div></article>`;
   };
-  ord.forEach((o,i)=>h+=tk(o,i+1));
-  if(skipped.length){
-    h+=`<div class="otitle" style="margin-top:18px"><h2 style="font-size:15px">오늘은 안 넣어도 되는 주문</h2><span>${skipped.length}건</span></div>`;
-    skipped.forEach(o=>h+=tk(o,'–','skip'));
+  main.forEach((o,i)=>h+=tk(o,i+1));
+  if(adds.length){
+    h+=`<div class="otitle" style="margin-top:18px"><h2 style="font-size:15px">큰 하락 대비 추가 주문</h2><span>${adds.length}건, 규칙에 포함</span></div>`;
+    adds.forEach((o,i)=>h+=tk(o,main.length+i+1));
   }
   if(r.warn) h+=`<div class="note">${r.warn}</div>`;
   $('orders').innerHTML=h;
-  $('oCount').textContent=ord.length>1?`${ord.length}건, 하나씩 따로 넣기`:'';
-  renderCoach(r, r.cost?(value-r.cost)/r.cost*100:0);
+  const n=main.length+adds.length;
+  $('oCount').textContent=n>1?`${n}건, 하나씩 따로 넣기`:'';
+  renderCoach(r, plPct);
 }
 
 function renderCoach(r,plPct){
@@ -494,7 +589,9 @@ function renderGuide(){
     <li>지정가 매도는 <b>${pre}(프리장 시작) 이후</b>에 넣어요. 낮에 보이는 &lsquo;데이마켓(주간거래)&rsquo;은 쓰지 않아요.</li>
   </ul>
   <h3>주문이 거부되면요?</h3>
-  <p>증권사는 현재가에서 너무 먼 가격(보통 ±10~20%)의 주문을 거부해요. 그래서 이 계산기는 현재가를 기준으로 거부될 주문을 미리 고쳐 줘요. 매수는 접수 가능한 가격으로 낮춰 주고(결과는 같아요), 어차피 오늘 체결될 일이 없는 매도는 &lsquo;오늘 패스&rsquo;로 빼 줘요.</p>
+  <p>증권사는 현재가에서 너무 먼 가격(보통 ±10~20%)의 주문을 거부해요. 주문표 가격은 라오어 규칙 그대로 두고, 거부될 수 있는 주문에만 대처법을 적어 드려요. 매수는 거부되면 현재가 +10% 이내 가격으로 다시 넣으면 결과가 같고, 너무 높은 매도는 거부돼도 오늘 체결될 일이 없어 결과가 같아요.</p>
+  <h3>평단보다 낮게 파는 게 맞나요?</h3>
+  <p>네, 후반전(${F.splits/2}회 이후)에는 별지점이 평단보다 낮아져서 쿼터매도(1/4)가 손해로 팔릴 수 있어요. V4.0 공식대로 계산한 결과예요. 팔린 돈으로 더 싸게 사서 평단을 낮추고, T가 0.75배로 줄어 기준이 다시 올라가요. 이익 실현은 3/4 지정가 매도(평단 +${BASE[F.ticker]}%)가 해요.</p>
   <h3>LOC 주문이 뭐예요?</h3>
   <p>&lsquo;장이 끝날 때 가격(종가)이 내가 정한 가격 이하면 산다&rsquo;는 예약 주문이에요.</p>
   <div class="q">예) $123에 LOC 매수를 걸었는데 종가가 $126이면 <b>안 사져요.</b> 종가가 $110이면 <b>$110에</b> 사져요. 정한 가격보다 비싸게 사는 일은 없어요.</div>
@@ -509,8 +606,8 @@ function renderGuide(){
 function bindSeg(id,key,num){
   $(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{F[key]=num?+b.dataset.v:b.dataset.v;save();renderAll();});
 }
-bindSeg('fTicker','ticker'); bindSeg('fSplits','splits',true); bindSeg('fBand','band',true);
-[['fSeed','seed'],['fQty','qty'],['fAvg','avg'],['fPrice','price']].forEach(([id,k])=>
+bindSeg('fTicker','ticker'); bindSeg('fSplits','splits',true); bindSeg('fBand','band',true); bindSeg('fRevDay','revDay',true);
+[['fSeed','seed'],['fQty','qty'],['fAvg','avg'],['fPrice','price'],['fT','T'],['fCash','cash'],['fAvg5','avg5']].forEach(([id,k])=>
   $(id).addEventListener('input',()=>{F[k]=$(id).value;save();renderAll();}));
 
 $('lCode').addEventListener('input',renderAll);
@@ -535,7 +632,7 @@ async function openCode(code,silent){
   if(CLOUD_ON){try{const d=await cloudCall('mb_get',{p_id:pid}); if(d&&d.data&&d.data.form) remote=d.data.form;}catch(e){}}
   const pick=(remote&&(!local||(remote.updatedAt||0)>(local.updatedAt||0)))?remote:local;
   PID=pid; CODE=code;
-  F=Object.assign({ticker:'SOXL',splits:40,seed:'',qty:'',avg:'',price:'',band:10,updatedAt:0},pick||{});
+  F=Object.assign({},F0,pick||{});
   try{localStorage.setItem('mb4-last',code);}catch(e){}
   save(); renderAll(); window.scrollTo(0,0);
   if(!silent) toast(pick?'내 입력값을 불러왔어요.':'새 코드예요. 내 상황을 입력해 주세요.');
