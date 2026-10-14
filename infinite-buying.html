@@ -107,6 +107,14 @@ h2{font-size:17px;font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
 .twhen{font-size:12.5px;margin-top:6px;color:var(--warn);font-weight:600;line-height:1.5}
 .ticket.opt{border-style:dashed}
 .ticket.skip{opacity:.55;border-style:dashed}
+.enter{margin-top:8px;padding:11px 12px;border-radius:10px;border:2px solid var(--buy);background:var(--buy-bg)}
+.enter .l1{font-size:12px;font-weight:700;color:var(--buy)}
+.enter .l2{font-size:22px;font-weight:900;letter-spacing:-.02em;margin-top:2px}
+.enter .l3{font-size:12px;color:var(--ink2);margin-top:4px;line-height:1.5}
+.combo{border:2px solid var(--buy);border-radius:var(--r);background:var(--sheet);padding:14px 16px;margin-bottom:12px}
+.combo h3{margin:0 0 4px;font-size:15px;font-weight:800}
+.combo .big{font-size:24px;font-weight:900;margin:6px 0}
+.combo p{margin:4px 0 0;font-size:13px;color:var(--ink2);line-height:1.6}
 .risk{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--soft);color:var(--ink2);font-size:12.5px;line-height:1.55}
 .risk b{color:var(--ink);font-weight:800}
 .rule{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--sell-bg);color:var(--sell);font-size:12.5px;line-height:1.55;font-weight:600}
@@ -269,7 +277,7 @@ input[type=number]{-moz-appearance:textfield}
             <button data-v="10">현재가 ±10%</button>
             <button data-v="20">현재가 ±20%</button>
           </div>
-          <div class="help">신한 등은 ±10%, LS 등은 ±20% 밖 가격을 거부할 수 있어요. 주문 가격은 규칙대로 두고, 거부될 수 있는 주문만 표시해 드려요.</div>
+          <div class="help">신한 등은 ±10%, LS 등은 ±20% 밖 가격을 거부해요. <b>±20%로 넣었는데도 거부되면 ±10%를 고르세요.</b></div>
         </div>
       </details>
     </div>
@@ -430,7 +438,8 @@ function applyBand(r){
     const gap=(o.price/P-1)*100, g=(gap>=0?'+':'')+gap.toFixed(1)+'%';
     if(o.side==='buy'&&o.price>hi){
       const np=Math.floor((hi-0.01)*100)/100;
-      o.risk=`현재가보다 ${g} 높아 증권사가 거부할 수 있어요. 거부되면 같은 수량을 <b>${usd(np)}</b>로 다시 넣으세요. LOC 매수는 종가가 걸어 둔 가격보다 낮으면 종가에 사지니 결과는 같아요.`;
+      o.enter=np;
+      o.risk=`규칙 가격이 현재가보다 ${g} 높아 증권사가 거부해요. LOC 매수는 종가가 걸어 둔 가격 이하이면 <b>종가에</b> 사지는 주문이라, 낮춰서 넣어도 체결 결과는 같아요. 하루에 ${Math.round(b*100)}% 넘게 급등하는 날만 빠져요.`;
     }else if(o.side==='sell'&&o.price>hi){
       o.risk=`현재가보다 ${g} 높아 증권사가 거부할 수 있어요. 거부되면 오늘은 그냥 넘어가도 돼요. 오늘 그 가격까지 오를 가능성은 낮아 결과는 같아요.`;
     }else if(o.price<lo){
@@ -527,10 +536,19 @@ function renderResult(){
         <div class="tmain"><div class="tprice num">${o.price==null?'종가 그대로':usd(o.price)}</div><div class="tqty num">${o.qty}<span>주</span></div></div>
         <div class="twhy">${o.why}</div>
         ${o.rule?`<div class="rule">${o.rule}</div>`:''}
+        ${o.enter?`<div class="enter"><div class="l1">증권사 앱에는 이 가격으로 넣으세요</div><div class="l2 num">${usd(o.enter)}</div><div class="l3">현재가 +${(F.band||10)-0.1}% 이내라 거부되지 않아요.</div></div>`:''}
         ${o.risk?`<div class="risk">${o.risk}</div>`:''}
         <div class="twhen">${whenText(o.type)}</div>
       </div></article>`;
   };
+  const low=main.filter(o=>o.enter);
+  if(low.length>=2){
+    const q=low.reduce((a,o)=>a+o.qty,0), px=low[0].enter;
+    h+=`<div class="combo"><h3>매수 거부될 때 가장 쉬운 방법</h3>
+      <p>매수 ${low.length}건이 모두 현재가와 차이가 커서 거부돼요. 아래처럼 <b>1건으로 합쳐서</b> 넣으면 돼요.</p>
+      <div class="big num">LOC 매수 ${usd(px)} · ${q}주</div>
+      <p>종가가 ${usd(px)} 이하로 끝나면(=오늘 ${(F.band||10)}% 넘게 급등하지 않으면) 종가에 ${q}주가 사져요. 원래 두 주문을 넣은 것과 결과가 같아요.</p></div>`;
+  }
   main.forEach((o,i)=>h+=tk(o,i+1));
   if(adds.length){
     h+=`<div class="otitle" style="margin-top:18px"><h2 style="font-size:15px">큰 하락 대비 추가 주문</h2><span>${adds.length}건, 규칙에 포함</span></div>`;
